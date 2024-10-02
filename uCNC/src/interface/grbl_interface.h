@@ -177,8 +177,8 @@ extern "C"
 #define MSG_HELP __romstr__("[HLP:$$ $# $G $I $N $x=val $Nx=line $J=line $C $X $H ~ ! ? ctrl-x]" STR_EOL)
 
 // Non query feedback messages
-#define MSG_START __romstr__("[MSG:")
-#define MSG_END __romstr__("]" STR_EOL)
+#define MSG_START __romstr__("//MSG:")
+#define MSG_END __romstr__(STR_EOL)
 #define MSG_FEEDBACK_1 __romstr__("Reset to continue")
 #define MSG_FEEDBACK_2 __romstr__("'$H'|'$X' to unlock")
 #define MSG_FEEDBACK_3 __romstr__("Caution: Unlocked")
