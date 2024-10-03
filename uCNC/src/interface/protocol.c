@@ -619,27 +619,27 @@ void protocol_send_gcode_coordsys(void)
 		protocol_send_newline();
 	}
 
-	protocol_send_string(__romstr__("[G28:"));
 	parser_get_coordsys(28, axis);
+	protocol_send_string(__romstr__("[G28:"));
 	serial_print_fltarr(axis, AXIS_COUNT);
 	serial_putc(']');
 	protocol_send_newline();
 
-	protocol_send_string(__romstr__("[G30:"));
 	parser_get_coordsys(30, axis);
+	protocol_send_string(__romstr__("[G30:"));
 	serial_print_fltarr(axis, AXIS_COUNT);
 	serial_putc(']');
 	protocol_send_newline();
 
-	protocol_send_string(__romstr__("[G92:"));
 	parser_get_coordsys(92, axis);
+	protocol_send_string(__romstr__("[G92:"));
 	serial_print_fltarr(axis, AXIS_COUNT);
 	serial_putc(']');
 	protocol_send_newline();
 
 #ifdef AXIS_TOOL
-	protocol_send_string(__romstr__("[TLO:"));
 	parser_get_coordsys(254, axis);
+	protocol_send_string(__romstr__("[TLO:"));
 	serial_print_flt(axis[0]);
 	serial_putc(']');
 	protocol_send_newline();
@@ -651,8 +651,8 @@ void protocol_send_gcode_coordsys(void)
 void protocol_send_probe_result(uint8_t val)
 {
 	float axis[MAX(AXIS_COUNT, 3)];
-	protocol_send_string(__romstr__("[PRB:"));
 	parser_get_coordsys(255, axis);
+	protocol_send_string(__romstr__("[PRB:"));
 	serial_print_fltarr(axis, AXIS_COUNT);
 	serial_putc(':');
 	serial_putc('0' + val);
