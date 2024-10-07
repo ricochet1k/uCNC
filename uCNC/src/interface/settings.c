@@ -247,7 +247,9 @@ void settings_init(void)
 
 	if (error)
 	{
-		settings_reset(true);
+		// settings_reset(true);
+		// load default settings into RAM
+		rom_memcpy(&g_settings, &default_settings, sizeof(settings_t));
 		protocol_send_error(STATUS_SETTING_READ_FAIL);
 		protocol_send_cnc_settings();
 	}
@@ -653,6 +655,11 @@ void settings_erase(uint16_t address, uint8_t *__ptr, uint16_t size)
 		return;
 	}
 
+	if (__ptr)
+	{
+		memset(__ptr, 0, size);
+	}
+
 #ifdef ENABLE_SETTINGS_MODULES
 	bool extended_erase __attribute__((__cleanup__(EVENT_HANDLER_NAME(settings_extended_erase)))) = (address == SETTINGS_ADDRESS_OFFSET);
 	settings_args_t args = {.address = address, .data = __ptr, .size = size};
@@ -662,11 +669,6 @@ void settings_erase(uint16_t address, uint8_t *__ptr, uint16_t size)
 		return;
 	}
 #endif
-
-	if (__ptr)
-	{
-		memset(__ptr, 0, size);
-	}
 
 #ifndef RAM_ONLY_SETTINGS
 	if (address != SETTINGS_ADDRESS_OFFSET)
@@ -700,7 +702,7 @@ bool settings_check_startup_gcode(uint16_t address)
 	{
 		serial_putc(':');
 		protocol_send_error(STATUS_SETTING_READ_FAIL);
-		settings_erase(address, NULL, 1);
+		// settings_erase(address, NULL, 1);
 		return false;
 	}
 

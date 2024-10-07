@@ -497,7 +497,7 @@ static uint8_t parser_grbl_command(void)
 				if (error != STATUS_OK)
 				{
 					// the Gcode is not valid then erase the startup block
-					settings_erase(block_address, NULL, 1);
+					// settings_erase(block_address, NULL, 1);
 				}
 
 				return error;
@@ -1591,7 +1591,9 @@ uint8_t parser_exec_command(parser_state_t *new_state, parser_words_t *words, pa
 		}
 		else
 		{
-			settings_load(SETTINGS_PARSER_PARAMETERS_ADDRESS_OFFSET + (index * PARSER_PARAM_ADDR_OFFSET), (uint8_t *)&coords, PARSER_PARAM_SIZE);
+			if (settings_load(SETTINGS_PARSER_PARAMETERS_ADDRESS_OFFSET + (index * PARSER_PARAM_ADDR_OFFSET), (uint8_t *)&coords, PARSER_PARAM_SIZE)) {
+				// TODO: handle and/or report error
+			}
 		}
 
 		for (uint8_t i = AXIS_COUNT; i != 0;)
@@ -3261,7 +3263,7 @@ void parser_parameters_load(void)
 #ifdef G92_STORE_NONVOLATILE
 	if (settings_load(G92ADDRESS, (uint8_t *)&parser_parameters.g92_offset, PARSER_PARAM_SIZE))
 	{
-		settings_erase(G92ADDRESS, (uint8_t *)&parser_parameters.g92_offset, PARSER_PARAM_SIZE);
+		// settings_erase(G92ADDRESS, (uint8_t *)&parser_parameters.g92_offset, PARSER_PARAM_SIZE);
 	}
 	memcpy(g92permanentoffset, parser_parameters.g92_offset, sizeof(g92permanentoffset));
 #else
@@ -3273,7 +3275,7 @@ void parser_parameters_load(void)
 	{
 		if (settings_load(SETTINGS_PARSER_PARAMETERS_ADDRESS_OFFSET + (i * PARSER_PARAM_ADDR_OFFSET), (uint8_t *)&parser_parameters.coord_system_offset, PARSER_PARAM_SIZE))
 		{
-			settings_erase(SETTINGS_PARSER_PARAMETERS_ADDRESS_OFFSET + (i * PARSER_PARAM_ADDR_OFFSET), (uint8_t *)&parser_parameters.coord_system_offset, PARSER_PARAM_SIZE);
+			// settings_erase(SETTINGS_PARSER_PARAMETERS_ADDRESS_OFFSET + (i * PARSER_PARAM_ADDR_OFFSET), (uint8_t *)&parser_parameters.coord_system_offset, PARSER_PARAM_SIZE);
 		}
 	}
 
@@ -3281,7 +3283,7 @@ void parser_parameters_load(void)
 #ifndef DISABLE_COORD_SYS_SUPPORT
 	if (settings_load(SETTINGS_PARSER_PARAMETERS_ADDRESS_OFFSET, (uint8_t *)&parser_parameters.coord_system_offset, PARSER_PARAM_SIZE))
 	{
-		settings_erase(SETTINGS_PARSER_PARAMETERS_ADDRESS_OFFSET, (uint8_t *)&parser_parameters.coord_system_offset, PARSER_PARAM_SIZE);
+		// settings_erase(SETTINGS_PARSER_PARAMETERS_ADDRESS_OFFSET, (uint8_t *)&parser_parameters.coord_system_offset, PARSER_PARAM_SIZE);
 	}
 #endif
 }

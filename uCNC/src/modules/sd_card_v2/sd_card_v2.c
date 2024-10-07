@@ -544,11 +544,18 @@ bool sd_settings_erase(void *args)
 		return EVENT_CONTINUE;
 	}
 
-	fs_file_t *fp = fs_open("/D/uCNC.cfg", "w");
+	settings_args_t *p = args;
+
+	fs_file_t *fp = fs_open("/D/uCNC.cfg", "a+");
 	if (fp)
 	{
-		protocol_send_feedback(__romstr__(SD_STR_SETTINGS_ERASED));
-		result = EVENT_HANDLED;
+		fs_seek(fp, p->address);
+		i = fs_write(fp, p->data, p->size);
+		if (p->size == i)
+		{
+			protocol_send_feedback(__romstr__(SD_STR_SETTINGS_ERASED));
+			result = EVENT_HANDLED;
+		}
 	}
 
 	fs_close(fp);

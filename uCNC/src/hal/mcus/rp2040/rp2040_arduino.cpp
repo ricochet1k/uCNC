@@ -838,7 +838,7 @@ void rp2040_wifi_bt_init(void)
 	bt_settings_offset = settings_register_external_setting(1);
 	if (settings_load(bt_settings_offset, &bt_on, 1))
 	{
-		settings_erase(bt_settings_offset, (uint8_t *)&bt_on, 1);
+		// settings_erase(bt_settings_offset, (uint8_t *)&bt_on, 1);
 	}
 
 	if (bt_on)
