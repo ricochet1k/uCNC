@@ -537,13 +537,13 @@ CREATE_EVENT_LISTENER_WITHLOCK(settings_save, sd_settings_save, SD_CARD_BUS_LOCK
 bool sd_settings_erase(void *args)
 // OVERRIDE_EVENT_HANDLER(settings_erase)
 {
-	bool result = EVENT_CONTINUE;
-
 	if ((sd_card_mounted != SD_MOUNTED))
 	{
 		return EVENT_CONTINUE;
 	}
 
+	UINT i = 0;
+	bool result = EVENT_CONTINUE;
 	settings_args_t *p = args;
 
 	fs_file_t *fp = fs_open("/D/uCNC.cfg", "a+");
