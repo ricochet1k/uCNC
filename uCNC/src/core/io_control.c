@@ -418,15 +418,20 @@ void io_disable_probe(void)
 
 bool io_get_probe(void)
 {
-#if !ASSERT_PIN(PROBE)
-	return false;
-#else
 #if ASSERT_PIN(PROBE)
 	bool probe = (io_get_input(PROBE) != 0);
-	return (!g_settings.probe_invert_mask) ? probe : !probe;
+	if (g_settings.probe_invert_mask) probe = !probe;
+#if ASSERT_PIN(PROBE2)
+	bool probe2 = (io_get_input(PROBE2) != 0);
+	if (g_settings.probe_invert_mask) probe2 = !probe2;
+#ifdef PROBE2_INVERT
+	probe2 = !probe2;
+#endif
+	probe = probe || probe2;
+#endif
+	return probe;
 #else
 	return false;
-#endif
 #endif
 }
 

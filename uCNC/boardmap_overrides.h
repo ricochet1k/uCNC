@@ -95,8 +95,6 @@ extern "C"
 #define DOUT30_PORT 0
 #define DOUT31_BIT 18
 #define DOUT31_PORT 1
-#define LIMIT_B_BIT 25
-#define LIMIT_B_PORT 1
 #define PROBE_BIT 10
 #define PROBE_PORT 0
 #define PROBE_PULLUP
@@ -143,6 +141,8 @@ extern "C"
 #define DIN27_PORT 4
 #define DIN29_BIT 5
 #define DIN29_PORT 0
+#define DIN32_BIT 25
+#define DIN32_PORT 1
 #define TX_BIT 28
 #define TX_PORT 4
 #define RX_BIT 29
