@@ -418,6 +418,9 @@ void io_disable_probe(void)
 
 bool io_get_probe(void)
 {
+#if !ASSERT_PIN(PROBE)
+	return false;
+#else
 #if ASSERT_PIN(PROBE)
 	bool probe = (io_get_input(PROBE) != 0);
 	if (g_settings.probe_invert_mask) probe = !probe;
@@ -432,6 +435,7 @@ bool io_get_probe(void)
 	return probe;
 #else
 	return false;
+#endif
 #endif
 }
 

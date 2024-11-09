@@ -2857,19 +2857,6 @@ void parser_machine_to_work(float *axis)
 	{
 		axis[AXIS_TOOL] -= parser_parameters.tool_length_offset;
 	}
-=======
-#ifndef DISABLE_COORDINATES_SYSTEM_RAM
-		settings_load(SETTINGS_PARSER_PARAMETERS_ADDRESS_OFFSET + (i * PARSER_PARAM_ADDR_OFFSET), (uint8_t *)coordinate_systems[i], PARSER_PARAM_SIZE);
-#else
-		settings_load(SETTINGS_PARSER_PARAMETERS_ADDRESS_OFFSET + (i * PARSER_PARAM_ADDR_OFFSET), (uint8_t *)parser_parameters.coord_system_offset, PARSER_PARAM_SIZE);
-#endif
-	}
-
-	// load G54
-	settings_load(SETTINGS_PARSER_PARAMETERS_ADDRESS_OFFSET, (uint8_t *)parser_parameters.coord_system_offset, PARSER_PARAM_SIZE);
-#ifndef DISABLE_COORDINATES_SYSTEM_RAM
-	memcpy(coordinate_systems[0], parser_parameters.coord_system_offset, PARSER_PARAM_SIZE);
->>>>>>> master
 #endif
 }
 

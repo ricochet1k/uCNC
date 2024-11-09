@@ -25,9 +25,6 @@ extern "C"
 {
 #endif
 
-// #define DEBUG_STREAM (&usb_serial_stream)
-
-
 	/**
 	 * Serial COM
 	 * Defines the serial COM baud rate
