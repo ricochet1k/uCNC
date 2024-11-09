@@ -11,10 +11,11 @@ extern "C"
 #define ENABLE_RS274NGC_EXPRESSIONS
 #define DISABLE_ALL_CONTROLS
 #define PROBE_PULLUP_ENABLE
-#define TOOL1 vfd_modbus
-#define VFD_TX_PIN DOUT27
-#define VFD_RX_PIN DIN27
-#define VFD_BAUDRATE 38400
+#define TOOL1 spindle_pwm
+// #define TOOL1 vfd_modbus
+// #define VFD_TX_PIN DOUT27
+// #define VFD_RX_PIN DIN27
+// #define VFD_BAUDRATE 38400
 #define SOFT_SPI_ENABLED
 #define SOFT_SPI_CLK DOUT30
 #define SOFT_SPI_SDO DOUT29
