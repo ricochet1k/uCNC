@@ -1139,13 +1139,15 @@ FRESULT pf_opendir (
 /* Read Directory Entry in Sequense                                      */
 /*-----------------------------------------------------------------------*/
 
+BYTE sp[12];
+
 FRESULT pf_readdir (
 	DIR *dj,			/* Pointer to the open directory object */
 	FILINFO *fno		/* Pointer to file information to return */
 )
 {
 	FRESULT res;
-	BYTE sp[12], dir[32];
+	BYTE dir[32];
 	FATFS *fs = FatFs;
 
 
