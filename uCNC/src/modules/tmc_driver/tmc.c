@@ -136,14 +136,6 @@ uint32_t tmc_read_register(tmc_driver_t *driver, uint8_t address)
 		result = ((uint32_t)data[1] << 24) | ((uint32_t)data[2] << 16) | (data[3] << 8) | data[4];
 	}
 
-
-	protocol_send_string(__romstr__("//[TMC_READ_REG:"));
-	serial_print_int(address);
-	serial_putc(',');
-	serial_print_int(result);
-	serial_putc(']');
-	protocol_send_string(MSG_EOL);
-
 	return result;
 }
 
@@ -153,13 +145,6 @@ uint32_t tmc_write_register(tmc_driver_t *driver, uint8_t address, uint32_t val)
 	{
 		return TMC_WRITE_ERROR;
 	}
-
-	protocol_send_string(__romstr__("//[TMC_WRITE_REG:"));
-	serial_print_int(address);
-	serial_putc(',');
-	serial_print_int(val);
-	serial_putc(']');
-	protocol_send_string(MSG_EOL);
 
 	switch (address)
 	{
