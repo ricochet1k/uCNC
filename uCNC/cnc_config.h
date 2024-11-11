@@ -278,7 +278,7 @@ extern "C"
  * processes and displays the currently executing gcode numbered line
  * */
 
-// #define GCODE_PROCESS_LINE_NUMBERS
+#define GCODE_PROCESS_LINE_NUMBERS
 #ifdef GCODE_PROCESS_LINE_NUMBERS
 // uncomment this line to ignore the value in the N parameter and count real
 // text lines
