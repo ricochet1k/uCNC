@@ -113,10 +113,10 @@ extern "C"
 				uint8_t toff : 4;
 				uint8_t hstrt : 3;
 				uint8_t hend : 4;
-				uint8_t : 4;
+				uint8_t reserved1 : 4;
 				uint8_t tbl : 2;
 				uint8_t vsense : 1;
-				uint8_t : 6;
+				uint8_t reserved2 : 6;
 				uint8_t mres : 4;
 				uint8_t intpol : 1;
 				uint8_t dedge : 1;

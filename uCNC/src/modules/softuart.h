@@ -34,6 +34,7 @@ extern "C"
 		void (*waithalf)(void);
 		void (*tx)(bool);
 		bool (*rx)(void);
+		uint32_t micros_per_bit;
 	} softuart_port_t;
 
 #ifndef SOFTUART_HW_TX_FALLBACK
@@ -61,7 +62,7 @@ extern "C"
 	}                                                                  \
 	void NAME##_wait(void) { mcu_delay_cycles(F_CPU / BAUD); }         \
 	void NAME##_waithalf(void) { mcu_delay_cycles(F_CPU / 2 / BAUD); } \
-	__attribute__((used)) softuart_port_t NAME = {.wait = &NAME##_wait, .waithalf = &NAME##_waithalf, .tx = &NAME##_tx, .rx = &NAME##_rx};
+	__attribute__((used)) softuart_port_t NAME = {.micros_per_bit = 1000000 / BAUD, .wait = &NAME##_wait, .waithalf = &NAME##_waithalf, .tx = &NAME##_tx, .rx = &NAME##_rx};
 
 #define ONEWIRE(NAME, BAUD, TRXPIN)                                  \
 	void NAME##_tx(bool state)                                         \
@@ -83,7 +84,7 @@ extern "C"
 	}                                                                  \
 	void NAME##_wait(void) { mcu_delay_cycles(F_CPU / BAUD); }         \
 	void NAME##_waithalf(void) { mcu_delay_cycles(F_CPU / 2 / BAUD); } \
-	__attribute__((used)) softuart_port_t NAME = {.wait = &NAME##_wait, .waithalf = &NAME##_waithalf, .tx = &NAME##_tx, .rx = &NAME##_rx};
+	__attribute__((used)) softuart_port_t NAME = {.micros_per_bit = 1000000 / BAUD, .wait = &NAME##_wait, .waithalf = &NAME##_waithalf, .tx = &NAME##_tx, .rx = &NAME##_rx};
 
 	void softuart_putc(softuart_port_t *port, char c);
 	int16_t softuart_getc(softuart_port_t *port, uint32_t ms_timeout);

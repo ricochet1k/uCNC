@@ -89,7 +89,7 @@ void grbl_stream_init(void)
 #ifdef ENABLE_DEBUG_STREAM
 static void debug_flush(void)
 {
-	while (grbl_stream_busy())
+	if (grbl_stream_busy())
 	{
 		return;
 	}
@@ -111,8 +111,9 @@ static void FORCEINLINE debug_putc(char c)
 	if (BUFFER_FULL(debug_tx))
 	{
 		BUFFER_CLEAR(debug_tx);
-		rom_strcpy((char*)debug_tx_bufferdata, __romstr__("Debug buffer overflow!\0"));
+		rom_strcpy((char*)debug_tx_bufferdata, __romstr__("Debug buffer overflow!\n\0"));
 		debug_tx.count = strlen((char*)debug_tx_bufferdata);
+		debug_tx_lines = 1;
 	}
 
 	BUFFER_ENQUEUE(debug_tx, &c);

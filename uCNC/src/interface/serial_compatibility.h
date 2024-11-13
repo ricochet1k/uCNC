@@ -28,9 +28,11 @@ extern "C"
 #define serial_getc grbl_stream_getc
 #define serial_putc proto_putc
 #define serial_print_str(__s) proto_printf("%s", __s)
-#define print_int(cb, num) prt_int(cb, PRINT_CALLBACK, (uint32_t)(num), 0)
+#define print_int(cb, num) prt_int(cb, PRINT_CALLBACK, (int32_t)(num), 0)
+#define print_uint(cb, num) prt_int(cb, PRINT_CALLBACK, (uint32_t)(num), 0)
 #define print_flt(cb, num) prt_flt(cb, PRINT_CALLBACK, (float)(num), 9)
 #define serial_print_int(num) print_int(proto_putc, num)
+#define serial_print_uint(num) print_uint(proto_putc, num)
 #define serial_print_flt(num) print_flt(proto_putc, num)
 #define serial_stream_change grbl_stream_change
 #define serial_stream_register grbl_stream_register

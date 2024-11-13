@@ -40,7 +40,8 @@ extern "C"
 	// printing utils
 	typedef void (*prt_putc_cb)(char);
 	size_t prt_byte(void *out, size_t maxlen, const uint8_t *data, uint8_t flags);
-	size_t prt_int(void *out, size_t maxlen, uint32_t num, uint8_t padding);
+	size_t prt_int(void *out, size_t maxlen, int32_t num, uint8_t padding);
+	size_t prt_uint(void *out, size_t maxlen, uint32_t num, uint8_t padding);
 	size_t prt_flt(void *out, size_t maxlen, float num, uint8_t precision);
 	size_t prt_ip(void *out, size_t maxlen, uint32_t ip);
 	size_t prt_fmtva(void *out, size_t maxlen, const char *fmt, va_list *args);

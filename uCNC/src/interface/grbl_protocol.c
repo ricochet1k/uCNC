@@ -341,7 +341,7 @@ static FORCEINLINE void proto_status_tail(void)
 
 	if (!g_planner_state.ovr_counter)
 	{
-		g_planner_state.ovr_counter = STATUS_WCO_REPORT_MIN_FREQUENCY;
+		g_planner_state.ovr_counter = STATUS_OVR_REPORT_MIN_FREQUENCY;
 		uint8_t tovr = 0;
 #if TOOL_COUNT > 0
 		tovr = g_planner_state.spindle_speed_override;

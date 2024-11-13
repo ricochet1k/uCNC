@@ -28,24 +28,32 @@ void softuart_putc(softuart_port_t *port, char c)
 	}
 	else
 	{
-		port->tx(false);
-		port->wait();
-		uint8_t bits = 8;
-		do
+		// __ATOMIC__ 
 		{
-			if (c & 0x01)
-			{
-				port->tx(true);
-			}
-			else
-			{
-				port->tx(false);
-			}
-			c >>= 1;
+			// uint32_t start_micros = mcu_micros();
+			// uint32_t wait_for = 0;
+			port->tx(false);
 			port->wait();
-		} while (--bits);
-		port->tx(true);
+			// wait_for += port->micros_per_bit; while(mcu_micros() - start_micros < wait_for) ;
+			uint8_t bits = 8;
+			do
+			{
+				if (c & 0x01)
+				{
+					port->tx(true);
+				}
+				else
+				{
+					port->tx(false);
+				}
+				c >>= 1;
+				port->wait();
+				// wait_for += port->micros_per_bit; while(mcu_micros() - start_micros < wait_for) ;
+			} while (--bits);
+			port->tx(true);
+		}
 		port->wait();
+		// wait_for += port->micros_per_bit; while(mcu_micros() - start_micros < wait_for) ;
 	}
 }
 
@@ -87,21 +95,29 @@ int16_t softuart_getc(softuart_port_t *port, uint32_t ms_timeout)
 			return 0;
 		}
 
-		port->waithalf();
-
-		uint8_t bits = 8;
-		uint8_t mask = 0x01;
-
-		do
+		// __ATOMIC__
 		{
-			port->wait();
-			if (port->rx())
+			// uint32_t start_micros = mcu_micros();
+			// uint32_t wait_for = 0;
+			port->waithalf();
+			// wait_for += port->micros_per_bit / 2; while(mcu_micros() - start_micros < wait_for) ;
+
+			uint8_t bits = 8;
+			uint8_t mask = 0x01;
+
+			do
 			{
-				val |= mask;
-			}
-			mask <<= 1;
-		} while (--bits);
-		port->waithalf();
+				port->wait();
+				// wait_for += port->micros_per_bit; while(mcu_micros() - start_micros < wait_for) ;
+				if (port->rx())
+				{
+					val |= mask;
+				}
+				mask <<= 1;
+			} while (--bits);
+			port->waithalf();
+			// wait_for += port->micros_per_bit; while(mcu_micros() - start_micros < wait_for) ;
+		}
 	}
 
 	return (int16_t)val;

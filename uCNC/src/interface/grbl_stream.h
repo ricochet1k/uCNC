@@ -75,7 +75,7 @@ extern "C"
 #ifdef ENABLE_DEBUG_STREAM
 	// to customize the debug stream you can reference it to an existing stream
 	// for example to set it to the USB stream you can define DEBUG_STREAM like this
-	// #define DEBUG_STREAM (&usb_serial_stream)
+// #define DEBUG_STREAM (&usb_grbl_stream)
 
 #ifndef DEBUG_STREAM
 	extern grbl_stream_t *default_stream;

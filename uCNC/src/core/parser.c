@@ -28,6 +28,9 @@
 #include <string.h>
 #include <float.h>
 
+#undef DBGMSG
+#define DBGMSG(fmt, ...)
+
 // extended codes
 #define M10 EXTENDED_MCODE(10)
 

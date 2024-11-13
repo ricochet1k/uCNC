@@ -42,6 +42,7 @@ extern void lpc176x_usb_write(uint8_t *ptr, uint8_t len);
  **/
 // provided by the framework
 extern volatile uint64_t _millis;
+// volatile uint64_t _millis_micros; // premultiplied _millis*1000
 volatile bool lpc_global_isr_enabled;
 
 // define the mcu internal servo variables
@@ -178,6 +179,7 @@ void MCU_RTC_ISR(void)
 {
 	mcu_disable_global_isr();
 	_millis++;
+	// _millis_micros += 1000;
 	mcu_rtc_cb((uint32_t)_millis);
 	mcu_enable_global_isr();
 }
@@ -830,16 +832,17 @@ uint32_t mcu_millis()
 	return (uint32_t)_millis;
 }
 
+uint32_t mcu_micros()
+{
+	return ((mcu_millis() * 1000) + mcu_free_micros());
+	// return _millis_micros + mcu_free_micros();
+}
+
+#ifndef mcu_delay_us
 /**
  * provides a delay in us (micro seconds)
  * the maximum allowed delay is 255 us
  * */
-uint32_t mcu_micros()
-{
-	return ((mcu_millis() * 1000) + mcu_free_micros());
-}
-
-#ifndef mcu_delay_us
 void mcu_delay_us(uint16_t delay)
 {
 	// lpc176x_delay_us(delay);

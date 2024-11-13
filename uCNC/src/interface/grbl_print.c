@@ -71,7 +71,7 @@ static size_t prt_putc(void *out, size_t maxlen, char c)
 #ifndef PRINT_FTM_MINIMAL
 size_t prt_byte(void *out, size_t maxlen, const uint8_t *data, uint8_t flags)
 {
-	bool prefix = (flags && HEX_PREFIX);
+	bool prefix = (flags & HEX_PREFIX);
 	char hexchar = (flags & HEX_UPPER) ? 'A' : 'a';
 	uint8_t size = HEX_SIZE(flags);
 	if (prefix)
@@ -94,7 +94,16 @@ size_t prt_byte(void *out, size_t maxlen, const uint8_t *data, uint8_t flags)
 }
 #endif
 
-size_t prt_int(void *out, size_t maxlen, uint32_t num, uint8_t padding)
+size_t prt_int(void *out, size_t maxlen, int32_t num, uint8_t padding)
+{
+	if (num < 0) {
+		maxlen = prt_putc(out, maxlen, '-');
+		num = -num;
+	}
+	return prt_uint(out, maxlen, num, padding);
+}
+
+size_t prt_uint(void *out, size_t maxlen, uint32_t num, uint8_t padding)
 {
 	uint8_t buffer[11];
 	uint8_t i = 0;
@@ -165,9 +174,9 @@ size_t prt_flt(void *out, size_t maxlen, float num, uint8_t precision)
 		digits = 0;
 	}
 
-	maxlen = prt_int(out, maxlen, interger, 0);
+	maxlen = prt_uint(out, maxlen, interger, 0);
 	maxlen = prt_putc(out, maxlen, '.');
-	maxlen = prt_int(out, maxlen, digits, precision);
+	maxlen = prt_uint(out, maxlen, digits, precision);
 
 	return maxlen;
 }
@@ -176,13 +185,13 @@ size_t prt_flt(void *out, size_t maxlen, float num, uint8_t precision)
 size_t prt_ip(void *out, size_t maxlen, uint32_t ip)
 {
 	uint8_t *ptr = (uint8_t *)&ip;
-	maxlen = prt_int(out, maxlen, (int32_t)ptr[3], 0);
+	maxlen = prt_uint(out, maxlen, ptr[3], 0);
 	maxlen = prt_putc(out, maxlen, '.');
-	maxlen = prt_int(out, maxlen, (int32_t)ptr[2], 0);
+	maxlen = prt_uint(out, maxlen, ptr[2], 0);
 	maxlen = prt_putc(out, maxlen, '.');
-	maxlen = prt_int(out, maxlen, (int32_t)ptr[1], 0);
+	maxlen = prt_uint(out, maxlen, ptr[1], 0);
 	maxlen = prt_putc(out, maxlen, '.');
-	maxlen = prt_int(out, maxlen, (int32_t)ptr[0], 0);
+	maxlen = prt_uint(out, maxlen, ptr[0], 0);
 
 	return maxlen;
 }
