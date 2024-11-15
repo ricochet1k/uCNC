@@ -149,7 +149,11 @@ uint32_t tmc_read_register(tmc_driver_t *driver, uint8_t address)
 			result = ((uint32_t)data[1] << 24) | ((uint32_t)data[2] << 16) | ((uint32_t)data[3] << 8) | data[4];
 		}
 
-		return result;
+		return result;		
+	} while (--retries > 0);
+
+	DBGMSG("tmc read failed: %hx", address);
+	return TMC_READ_ERROR;
 }
 
 uint32_t tmc_write_register(tmc_driver_t *driver, uint8_t address, uint32_t val)
@@ -388,8 +392,8 @@ float tmc_get_current(tmc_driver_t *driver, tmc_driver_setting_t *settings)
 		return -1;
 	}
 
-	DBGMSG("get CHOPCONF: %lx", chopconf.sr);
-	DBGMSG("get IRUN: %d, vsense: %d", driver->reg.ihold_irun.irun, chopconf.vsense);
+	DBGMSG("get CHOPCONF: %lx", chopconf);
+	DBGMSG("get IRUN: %d, vsense: %d", TMC_GET_FIELD(driver->reg.ihold_irun, IHOLD_IRUN_IRUN), TMC_GET_FIELD(chopconf, CHOPCONF_VSENSE));
 
 	uint8_t irun = (uint8_t)(TMC_GET_FIELD(driver->reg.ihold_irun, IHOLD_IRUN_IRUN));
 	return (float)(irun + 1) / 32.0 * ((TMC_GET_FIELD(chopconf, CHOPCONF_VSENSE)) ? 0.180 : 0.325) / (settings->rsense + 0.02) / 1.41421 * 1000;
@@ -430,7 +434,7 @@ void tmc_set_current(tmc_driver_t *driver, tmc_driver_setting_t *settings)
 	
 	if (tmc_write_register(driver, CHOPCONF, chopconf) == TMC_WRITE_ERROR)
 	{
-		DBGMSG("failed CHOPCONF=%d", chopconf.sr);
+		DBGMSG("failed CHOPCONF=%d", chopconf);
 		// return TMC_WRITE_ERROR;
 	}
 	uint32_t reread_chopconf = tmc_read_register(driver, CHOPCONF);
@@ -440,7 +444,7 @@ void tmc_set_current(tmc_driver_t *driver, tmc_driver_setting_t *settings)
 	uint32_t ihold_irun = driver->reg.ihold_irun;
 	TMC_SET_FIELD(ihold_irun, IHOLD_IRUN_IRUN, currentsense);
 	TMC_SET_FIELD(ihold_irun, IHOLD_IRUN_IHOLD, (uint8_t)(currentsense * settings->ihold_mul));
-	DBGMSG("set IRUN: %d, vsense: %d", ihold_irun.irun, chopconf.vsense);
+	DBGMSG("set IRUN: %d, vsense: %d", TMC_GET_FIELD(ihold_irun, IHOLD_IRUN_IRUN), TMC_GET_FIELD(chopconf, CHOPCONF_VSENSE));
 	TMC_SET_FIELD(ihold_irun, IHOLD_IRUN_IHOLDDELAY, (uint8_t)(settings->ihold_delay));
 	if (tmc_write_register(driver, IHOLD_IRUN, ihold_irun) == TMC_WRITE_ERROR)
 	{
@@ -500,7 +504,7 @@ void tmc_set_microstep(tmc_driver_t *driver, tmc_driver_setting_t *settings)
 		return;
 	}
 
-	uint8_t ms = chopconf.mres;
+	uint8_t ms = TMC_GET_FIELD(gconf, GCONF_MSTEP_REG_SELECT);
 	switch (settings->mstep)
 	{
 	case 256:
