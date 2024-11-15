@@ -16,15 +16,15 @@
 	See the	GNU General Public License for more details.
 */
 
-#include "src/cnc.h"
-#include "src/modules/softuart.h"
-#include "src/modules/softspi.h"
+#include "../../cnc.h"
+#include "../softuart.h"
+#include "../softspi.h"
 #include "tmc.h"
 #include "tmc_driver.h"
 #include <stdint.h>
 #include <float.h>
 
-#if (UCNC_MODULE_VERSION < 10807 || UCNC_MODULE_VERSION > 99999)
+#if (UCNC_MODULE_VERSION < 11090 || UCNC_MODULE_VERSION > 99999)
 #error "This module is not compatible with the current version of µCNC"
 #endif
 
@@ -37,11 +37,6 @@
 #define TMC1_STEPPER_RW(CHANNEL)                                                                      \
 	static void tmc##CHANNEL##_rw(uint8_t *data, uint8_t wlen, uint8_t rlen)                            \
 	{                                                                                                   \
-		debug_printf(DEBUG_PRELUDE "TMC %d W", CHANNEL);                                                   \
-		for (int i = 0; i < wlen; i++) {                                                                   \
-		    debug_printf(" %hx", data[i]);                                                                \
-		}                                                                                                   \
-		debug_printf(MSG_FEEDBACK_END);                                                                     \
 		stepper##CHANNEL##_select();                                                                      \
 		__ATOMIC__                                                                                        \
 		{                                                                                                 \
@@ -61,14 +56,9 @@
 		}                                                                                                 \
 		stepper##CHANNEL##_deselect();                                                                    \
 		cnc_delay_ms(TMC_UART_TIMEOUT(STEPPER##CHANNEL##_BAUDRATE));                                      \
-		debug_printf(DEBUG_PRELUDE "TMC %d R", CHANNEL);                                                   \
-		for (int i = 0; i < rlen; i++) {                                                                   \
-		    debug_printf(" %hx", data[i]);                                                                \
-		}                                                                                                   \
-		debug_printf(MSG_FEEDBACK_END);                                                                     \
 	}
 // SPI
-#define TMCSPI_STEPPER_RW(CHANNEL)                                           \
+#define TMCSPI_STEPPER_RW(CHANNEL)                                         \
 	static void tmc##CHANNEL##_rw(uint8_t *data, uint8_t wlen, uint8_t rlen) \
 	{                                                                        \
 		io_clear_output(STEPPER##CHANNEL##_SPI_CS);                            \
@@ -90,12 +80,13 @@
 		stepper##CHANNEL##_select();                                                                      \
 		__ATOMIC__                                                                                        \
 		{                                                                                                 \
-			io_config_input(STEPPER##CHANNEL##_UART_RX);                                                    \
-			io_config_pullup(STEPPER##CHANNEL##_UART_RX);                                                   \
+			io_config_output(STEPPER##CHANNEL##_UART_RX);                                                   \
+			io_set_output(STEPPER##CHANNEL##_UART_RX);                                                      \
 			for (uint8_t i = 0; i < wlen; i++)                                                              \
 			{                                                                                               \
 				softuart_putc(&tmc##CHANNEL##_uart, data[i]);                                                 \
 			}                                                                                               \
+			io_config_input(STEPPER##CHANNEL##_UART_RX);                                                    \
 			for (uint8_t i = 0; i < rlen; i++)                                                              \
 			{                                                                                               \
 				data[i] = softuart_getc(&tmc##CHANNEL##_uart, TMC_UART_TIMEOUT(STEPPER##CHANNEL##_BAUDRATE)); \
@@ -409,55 +400,56 @@ bool m350_exec(void *args)
 			bool need_comma = false;
 			(void)need_comma; // silence unused warning
 			// if no additional args then print the
-			protocol_send_string(__romstr__("[MICROSTEPS:"));
+			proto_print("[MICROSTEPS:");
 #ifdef STEPPER0_HAS_TMC
-			serial_putc('X');
-			serial_print_int(val0);
+			proto_putc('X');
+			proto_itoa(val0);
 			need_comma = true;
 #endif
 #ifdef STEPPER1_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('Y');
-			serial_print_int(val1);
+			if (need_comma) proto_putc(',');
+			proto_putc('Y');
+			proto_itoa(val1);
 			need_comma = true;
 #endif
 #ifdef STEPPER2_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('Z');
-			serial_print_int(val2);
+			if (need_comma) proto_putc(',');
+			proto_putc('Z');
+			proto_itoa(val2);
 			need_comma = true;
 #endif
 #ifdef STEPPER3_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('A');
-			serial_print_int(val3);
+			if (need_comma) proto_putc(',');
+			proto_putc('A');
+			proto_itoa(val3);
 			need_comma = true;
 #endif
 #ifdef STEPPER4_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('B');
-			serial_print_int(val4);
+			if (need_comma) proto_putc(',');
+			proto_putc('B');
+			proto_itoa(val4);
 			need_comma = true;
 #endif
 #ifdef STEPPER5_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('C');
-			serial_print_int(val5);
+			if (need_comma) proto_putc(',');
+			proto_putc('C');
+			proto_itoa(val5);
 			need_comma = true;
 #endif
 #ifdef STEPPER6_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('I');
-			serial_print_int(val6);
+			if (need_comma) proto_putc(',');
+			proto_putc('I');
+			proto_itoa(val6);
 			need_comma = true;
 #endif
 #ifdef STEPPER7_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('J');
-			serial_print_int(val7);
+			if (need_comma) proto_putc(',');
+			proto_putc('J');
+			proto_itoa(val7);
 #endif
-			serial_putc(']');
-			protocol_send_string(MSG_EOL);
+			proto_putc(']');
+			proto_putc('\n');
+			proto_putc('\r');
 		}
 		else
 		{
@@ -586,55 +578,56 @@ bool m906_exec(void *args)
 			bool need_comma = false;
 			(void)need_comma; // silence unused warning
 			// if no additional args then print the
-			protocol_send_string(__romstr__("[STEPPER CURRENT:"));
+			proto_print("[STEPPER CURRENT:");
 #ifdef STEPPER0_HAS_TMC
-			serial_putc('X');
-			serial_print_flt(val0);
+			proto_putc('X');
+			proto_ftoa(val0);
 			need_comma = true;
 #endif
 #ifdef STEPPER1_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('Y');
-			serial_print_flt(val1);
+			if (need_comma) proto_putc(',');
+			proto_putc('Y');
+			proto_ftoa(val1);
 			need_comma = true;
 #endif
 #ifdef STEPPER2_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('Z');
-			serial_print_flt(val2);
+			if (need_comma) proto_putc(',');
+			proto_putc('Z');
+			proto_ftoa(val2);
 			need_comma = true;
 #endif
 #ifdef STEPPER3_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('A');
-			serial_print_flt(val3);
+			if (need_comma) proto_putc(',');
+			proto_putc('A');
+			proto_ftoa(val3);
 			need_comma = true;
 #endif
 #ifdef STEPPER4_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('B');
-			serial_print_flt(val4);
+			if (need_comma) proto_putc(',');
+			proto_putc('B');
+			proto_ftoa(val4);
 			need_comma = true;
 #endif
 #ifdef STEPPER5_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('C');
-			serial_print_flt(val5);
+			if (need_comma) proto_putc(',');
+			proto_putc('C');
+			proto_ftoa(val5);
 			need_comma = true;
 #endif
 #ifdef STEPPER6_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('I');
-			serial_print_flt(val6);
+			if (need_comma) proto_putc(',');
+			proto_putc('I');
+			proto_ftoa(val6);
 			need_comma = true;
 #endif
 #ifdef STEPPER7_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('J');
-			serial_print_flt(val7);
+			if (need_comma) proto_putc(',');
+			proto_putc('J');
+			proto_ftoa(val7);
 #endif
-			serial_putc(']');
-			protocol_send_string(MSG_EOL);
+			proto_putc(']');
+			proto_putc('\n');
+			proto_putc('\r');
 		}
 		else
 		{
@@ -762,55 +755,57 @@ bool m913_exec(void *args)
 			bool need_comma = false;
 			(void)need_comma; // silence unused warning
 			// if no additional args then print the
-			protocol_send_string(__romstr__("[STEPPER HYBRID THRESHOLD:"));
+			proto_print("[STEPPER HYBRID THRESHOLD:");
+			
 #ifdef STEPPER0_HAS_TMC
-			serial_putc('X');
-			serial_print_int(val0);
+			proto_putc('X');
+			proto_itoa(val0);
 			need_comma = true;
 #endif
 #ifdef STEPPER1_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('Y');
-			serial_print_int(val1);
+			if (need_comma) proto_putc(',');
+			proto_putc('Y');
+			proto_itoa(val1);
 			need_comma = true;
 #endif
 #ifdef STEPPER2_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('Z');
-			serial_print_int(val2);
+			if (need_comma) proto_putc(',');
+			proto_putc('Z');
+			proto_itoa(val2);
 			need_comma = true;
 #endif
 #ifdef STEPPER3_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('A');
-			serial_print_int(val3);
+			if (need_comma) proto_putc(',');
+			proto_putc('A');
+			proto_itoa(val3);
 			need_comma = true;
 #endif
 #ifdef STEPPER4_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('B');
-			serial_print_int(val4);
+			if (need_comma) proto_putc(',');
+			proto_putc('B');
+			proto_itoa(val4);
 			need_comma = true;
 #endif
 #ifdef STEPPER5_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('C');
-			serial_print_int(val5);
+			if (need_comma) proto_putc(',');
+			proto_putc('C');
+			proto_itoa(val5);
 			need_comma = true;
 #endif
 #ifdef STEPPER6_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('I');
-			serial_print_int(val6);
+			if (need_comma) proto_putc(',');
+			proto_putc('I');
+			proto_itoa(val6);
 			need_comma = true;
 #endif
 #ifdef STEPPER7_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('J');
-			serial_print_int(val7);
+			if (need_comma) proto_putc(',');
+			proto_putc('J');
+			proto_itoa(val7);
 #endif
-			serial_putc(']');
-			protocol_send_string(MSG_EOL);
+			proto_putc(']');
+			proto_putc('\n');
+			proto_putc('\r');
 		}
 		else
 		{
@@ -940,53 +935,54 @@ bool m914_exec(void *args)
 			// if no additional args then print the
 			protocol_send_string(__romstr__("[STEPPER STALL SENSITIVITY:"));
 #ifdef STEPPER0_HAS_TMC
-			serial_putc('X');
-			serial_print_int(val0);
+			proto_putc('X');
+			proto_itoa(val0);
 			need_comma = true;
 #endif
 #ifdef STEPPER1_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('Y');
-			serial_print_int(val1);
+			if (need_comma) proto_putc(',');
+			proto_putc('Y');
+			proto_itoa(val1);
 			need_comma = true;
 #endif
 #ifdef STEPPER2_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('Z');
-			serial_print_int(val2);
+			if (need_comma) proto_putc(',');
+			proto_putc('Z');
+			proto_itoa(val2);
 			need_comma = true;
 #endif
 #ifdef STEPPER3_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('A');
-			serial_print_int(val3);
+			if (need_comma) proto_putc(',');
+			proto_putc('A');
+			proto_itoa(val3);
 			need_comma = true;
 #endif
 #ifdef STEPPER4_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('B');
-			serial_print_int(val4);
+			if (need_comma) proto_putc(',');
+			proto_putc('B');
+			proto_itoa(val4);
 			need_comma = true;
 #endif
 #ifdef STEPPER5_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('C');
-			serial_print_int(val5);
+			if (need_comma) proto_putc(',');
+			proto_putc('C');
+			proto_itoa(val5);
 			need_comma = true;
 #endif
 #ifdef STEPPER6_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('I');
-			serial_print_int(val6);
+			if (need_comma) proto_putc(',');
+			proto_putc('I');
+			proto_itoa(val6);
 			need_comma = true;
 #endif
 #ifdef STEPPER7_HAS_TMC
-			if (need_comma) serial_putc(',');
-			serial_putc('J');
-			serial_print_int(val7);
+			if (need_comma) proto_putc(',');
+			proto_putc('J');
+			proto_itoa(val7);
 #endif
-			serial_putc(']');
-			protocol_send_string(MSG_EOL);
+			proto_putc(']');
+			proto_putc('\n');
+			proto_putc('\r');
 		}
 		else
 		{
@@ -1107,10 +1103,10 @@ bool m920_exec(void *args)
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_X))
 		{
-			protocol_send_string(__romstr__("[TMCREG X:"));
+			proto_print("[TMCREG X:");
 			reg = (uint32_t)ptr->words->xyzabc[0];
-			serial_print_int(reg);
-			serial_putc(',');
+			proto_itoa(reg);
+			proto_putc(',');
 #ifdef STEPPER0_HAS_TMC
 			if (wordreg >= 0)
 			{
@@ -1132,17 +1128,18 @@ bool m920_exec(void *args)
 #else
 			reg = 0xFFFFFFFFUL;
 #endif
-			serial_print_int(reg);
-			serial_putc(']');
-			protocol_send_string(MSG_EOL);
+			proto_itoa(reg);
+			proto_putc(']');
+			proto_putc('\n');
+			proto_putc('\r');
 		}
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_Y))
 		{
-			protocol_send_string(__romstr__("[TMCREG Y:"));
+			proto_print("[TMCREG Y:");
 			reg = (uint32_t)ptr->words->xyzabc[1];
-			serial_print_int(reg);
-			serial_putc(',');
+			proto_itoa(reg);
+			proto_putc(',');
 #ifdef STEPPER1_HAS_TMC
 			if (wordreg >= 0)
 			{
@@ -1164,17 +1161,18 @@ bool m920_exec(void *args)
 #else
 			reg = 0xFFFFFFFFUL;
 #endif
-			serial_print_int(reg);
-			serial_putc(']');
-			protocol_send_string(MSG_EOL);
+			proto_itoa(reg);
+			proto_putc(']');
+			proto_putc('\n');
+			proto_putc('\r');
 		}
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_Z))
 		{
-			protocol_send_string(__romstr__("[TMCREG Z:"));
+			proto_print("[TMCREG Z:");
 			reg = (uint32_t)ptr->words->xyzabc[2];
-			serial_print_int(reg);
-			serial_putc(',');
+			proto_itoa(reg);
+			proto_putc(',');
 #ifdef STEPPER2_HAS_TMC
 			if (wordreg >= 0)
 			{
@@ -1196,17 +1194,18 @@ bool m920_exec(void *args)
 #else
 			reg = 0xFFFFFFFFUL;
 #endif
-			serial_print_int(reg);
-			serial_putc(']');
-			protocol_send_string(MSG_EOL);
+			proto_itoa(reg);
+			proto_putc(']');
+			proto_putc('\n');
+			proto_putc('\r');
 		}
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_A))
 		{
-			protocol_send_string(__romstr__("[TMCREG A:"));
+			proto_print("[TMCREG A:");
 			reg = (uint32_t)ptr->words->xyzabc[3];
-			serial_print_int(reg);
-			serial_putc(',');
+			proto_itoa(reg);
+			proto_putc(',');
 #ifdef STEPPER3_HAS_TMC
 			if (wordreg >= 0)
 			{
@@ -1228,17 +1227,18 @@ bool m920_exec(void *args)
 #else
 			reg = 0xFFFFFFFFUL;
 #endif
-			serial_print_int(reg);
-			serial_putc(']');
-			protocol_send_string(MSG_EOL);
+			proto_itoa(reg);
+			proto_putc(']');
+			proto_putc('\n');
+			proto_putc('\r');
 		}
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_B))
 		{
-			protocol_send_string(__romstr__("[TMCREG B:"));
+			proto_print("[TMCREG B:");
 			reg = (uint32_t)ptr->words->xyzabc[4];
-			serial_print_int(reg);
-			serial_putc(',');
+			proto_itoa(reg);
+			proto_putc(',');
 #ifdef STEPPER4_HAS_TMC
 			if (wordreg >= 0)
 			{
@@ -1260,17 +1260,18 @@ bool m920_exec(void *args)
 #else
 			reg = 0xFFFFFFFFUL;
 #endif
-			serial_print_int(reg);
-			serial_putc(']');
-			protocol_send_string(MSG_EOL);
+			proto_itoa(reg);
+			proto_putc(']');
+			proto_putc('\n');
+			proto_putc('\r');
 		}
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_C))
 		{
-			protocol_send_string(__romstr__("[TMCREG C:"));
+			proto_print("[TMCREG C:");
 			reg = (uint32_t)ptr->words->xyzabc[5];
-			serial_print_int(reg);
-			serial_putc(',');
+			proto_itoa(reg);
+			proto_putc(',');
 #ifdef STEPPER5_HAS_TMC
 			if (wordreg >= 0)
 			{
@@ -1292,17 +1293,18 @@ bool m920_exec(void *args)
 #else
 			reg = 0xFFFFFFFFUL;
 #endif
-			serial_print_int(reg);
-			serial_putc(']');
-			protocol_send_string(MSG_EOL);
+			proto_itoa(reg);
+			proto_putc(']');
+			proto_putc('\n');
+			proto_putc('\r');
 		}
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_I))
 		{
-			protocol_send_string(__romstr__("[TMCREG I:"));
+			proto_print("[TMCREG I:");
 			reg = (uint32_t)ptr->words->ijk[0];
-			serial_print_int(reg);
-			serial_putc(',');
+			proto_itoa(reg);
+			proto_putc(',');
 #ifdef STEPPER6_HAS_TMC
 			if (wordreg >= 0)
 			{
@@ -1324,17 +1326,18 @@ bool m920_exec(void *args)
 #else
 			reg = 0xFFFFFFFFUL;
 #endif
-			serial_print_int(reg);
-			serial_putc(']');
-			protocol_send_string(MSG_EOL);
+			proto_itoa(reg);
+			proto_putc(']');
+			proto_putc('\n');
+			proto_putc('\r');
 		}
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_J))
 		{
-			protocol_send_string(__romstr__("[TMCREG J:"));
+			proto_print("[TMCREG J:");
 			reg = (uint32_t)ptr->words->ijk[1];
-			serial_print_int(reg);
-			serial_putc(',');
+			proto_itoa(reg);
+			proto_putc(',');
 #ifdef STEPPER7_HAS_TMC
 			if (wordreg >= 0)
 			{
@@ -1356,9 +1359,10 @@ bool m920_exec(void *args)
 #else
 			reg = 0xFFFFFFFFUL;
 #endif
-			serial_print_int(reg);
-			serial_putc(']');
-			protocol_send_string(MSG_EOL);
+			proto_itoa(reg);
+			proto_putc(']');
+			proto_putc('\n');
+			proto_putc('\r');
 		}
 
 		*(ptr->error) = STATUS_OK;
@@ -1557,7 +1561,7 @@ DECL_MODULE(tmc_driver)
 	tmc6_settings.rms_current = STEPPER6_CURRENT_MA;
 	tmc6_settings.rsense = STEPPER6_RSENSE;
 	tmc6_settings.ihold_mul = STEPPER6_HOLD_MULT;
-	tmc6_settings.ihold_delay = 5;
+	tmc6_settings.ihold_delay = 6;
 	tmc6_settings.mstep = STEPPER6_MICROSTEP;
 	tmc6_settings.stealthchop_threshold = STEPPER6_STEALTHCHOP_THERSHOLD;
 	tmc6_settings.step_interpolation = STEPPER6_ENABLE_INTERPLATION;
@@ -1579,7 +1583,7 @@ DECL_MODULE(tmc_driver)
 	tmc7_settings.rms_current = STEPPER7_CURRENT_MA;
 	tmc7_settings.rsense = STEPPER7_RSENSE;
 	tmc7_settings.ihold_mul = STEPPER7_HOLD_MULT;
-	tmc7_settings.ihold_delay = 5;
+	tmc7_settings.ihold_delay = 7;
 	tmc7_settings.mstep = STEPPER7_MICROSTEP;
 	tmc7_settings.stealthchop_threshold = STEPPER7_STEALTHCHOP_THERSHOLD;
 	tmc7_settings.step_interpolation = STEPPER7_ENABLE_INTERPLATION;
