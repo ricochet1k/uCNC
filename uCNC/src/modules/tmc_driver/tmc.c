@@ -437,7 +437,7 @@ void tmc_set_current(tmc_driver_t *driver, tmc_driver_setting_t *settings)
 		DBGMSG("failed CHOPCONF=%d", chopconf);
 		// return TMC_WRITE_ERROR;
 	}
-	uint32_t reread_chopconf = tmc_read_register(driver, CHOPCONF);
+	// uint32_t reread_chopconf = tmc_read_register(driver, CHOPCONF);
 	// DBGMSG("set CHOPCONF: %lx (%lx)", chopconf, reread_chopconf);
 
 	// rms current
