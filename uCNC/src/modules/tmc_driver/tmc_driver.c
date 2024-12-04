@@ -448,57 +448,57 @@ bool m350_exec(void *args)
 			proto_itoa(val7);
 #endif
 			proto_putc(']');
-			proto_putc('\n');
 			proto_putc('\r');
+			proto_putc('\n');
 		}
 		else
 		{
 #ifdef STEPPER0_HAS_TMC
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_X))
 			{
-				tmc0_settings.mstep = (uint8_t)ptr->words->xyzabc[0];
+				tmc0_settings.mstep = (int16_t)ptr->words->xyzabc[0];
 			}
 #endif
 #ifdef STEPPER1_HAS_TMC
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_Y))
 			{
-				tmc1_settings.mstep = (uint8_t)ptr->words->xyzabc[1];
+				tmc1_settings.mstep = (int16_t)ptr->words->xyzabc[1];
 			}
 #endif
 #ifdef STEPPER2_HAS_TMC
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_Z))
 			{
-				tmc2_settings.mstep = (uint8_t)ptr->words->xyzabc[2];
+				tmc2_settings.mstep = (int16_t)ptr->words->xyzabc[2];
 			}
 #endif
 #ifdef STEPPER3_HAS_TMC
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_A))
 			{
-				tmc3_settings.mstep = (uint8_t)ptr->words->xyzabc[3];
+				tmc3_settings.mstep = (int16_t)ptr->words->xyzabc[3];
 			}
 #endif
 #ifdef STEPPER4_HAS_TMC
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_B))
 			{
-				tmc4_settings.mstep = (uint8_t)ptr->words->xyzabc[4];
+				tmc4_settings.mstep = (int16_t)ptr->words->xyzabc[4];
 			}
 #endif
 #ifdef STEPPER5_HAS_TMC
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_C))
 			{
-				tmc5_settings.mstep = (uint8_t)ptr->words->xyzabc[5];
+				tmc5_settings.mstep = (int16_t)ptr->words->xyzabc[5];
 			}
 #endif
 #ifdef STEPPER6_HAS_TMC
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_I))
 			{
-				tmc6_settings.mstep = (uint8_t)ptr->words->ijk[0];
+				tmc6_settings.mstep = (int16_t)ptr->words->ijk[0];
 			}
 #endif
 #ifdef STEPPER7_HAS_TMC
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_J))
 			{
-				tmc7_settings.mstep = (uint8_t)ptr->words->ijk[1];
+				tmc7_settings.mstep = (int16_t)ptr->words->ijk[1];
 			}
 #endif
 
@@ -626,8 +626,8 @@ bool m906_exec(void *args)
 			proto_ftoa(val7);
 #endif
 			proto_putc(']');
-			proto_putc('\n');
 			proto_putc('\r');
+			proto_putc('\n');
 		}
 		else
 		{
@@ -804,8 +804,8 @@ bool m913_exec(void *args)
 			proto_itoa(val7);
 #endif
 			proto_putc(']');
-			proto_putc('\n');
 			proto_putc('\r');
+			proto_putc('\n');
 		}
 		else
 		{
@@ -981,8 +981,8 @@ bool m914_exec(void *args)
 			proto_itoa(val7);
 #endif
 			proto_putc(']');
-			proto_putc('\n');
 			proto_putc('\r');
+			proto_putc('\n');
 		}
 		else
 		{
@@ -1130,8 +1130,8 @@ bool m920_exec(void *args)
 #endif
 			proto_itoa(reg);
 			proto_putc(']');
-			proto_putc('\n');
 			proto_putc('\r');
+			proto_putc('\n');
 		}
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_Y))
@@ -1163,8 +1163,8 @@ bool m920_exec(void *args)
 #endif
 			proto_itoa(reg);
 			proto_putc(']');
-			proto_putc('\n');
 			proto_putc('\r');
+			proto_putc('\n');
 		}
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_Z))
@@ -1196,8 +1196,8 @@ bool m920_exec(void *args)
 #endif
 			proto_itoa(reg);
 			proto_putc(']');
-			proto_putc('\n');
 			proto_putc('\r');
+			proto_putc('\n');
 		}
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_A))
@@ -1229,8 +1229,8 @@ bool m920_exec(void *args)
 #endif
 			proto_itoa(reg);
 			proto_putc(']');
-			proto_putc('\n');
 			proto_putc('\r');
+			proto_putc('\n');
 		}
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_B))
@@ -1262,8 +1262,8 @@ bool m920_exec(void *args)
 #endif
 			proto_itoa(reg);
 			proto_putc(']');
-			proto_putc('\n');
 			proto_putc('\r');
+			proto_putc('\n');
 		}
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_C))
@@ -1295,8 +1295,8 @@ bool m920_exec(void *args)
 #endif
 			proto_itoa(reg);
 			proto_putc(']');
-			proto_putc('\n');
 			proto_putc('\r');
+			proto_putc('\n');
 		}
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_I))
@@ -1328,8 +1328,8 @@ bool m920_exec(void *args)
 #endif
 			proto_itoa(reg);
 			proto_putc(']');
-			proto_putc('\n');
 			proto_putc('\r');
+			proto_putc('\n');
 		}
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_J))
@@ -1361,8 +1361,8 @@ bool m920_exec(void *args)
 #endif
 			proto_itoa(reg);
 			proto_putc(']');
-			proto_putc('\n');
 			proto_putc('\r');
+			proto_putc('\n');
 		}
 
 		*(ptr->error) = STATUS_OK;
