@@ -53,7 +53,16 @@ extern "C"
 #include "hal/tools/tool.h" //configures the kinematics for the cnc machine
 // final HAL configurations
 #include "../cnc_hal_config.h"		//inicializes the HAL hardcoded connections
+// Hosted/Linux simulator builds (see sim-linux/) pass
+// -DSIM_HAL_OVERRIDES_FILE='"sim_hal_overrides.h"' to use a minimal
+// overrides file instead of the real machine's cnc_hal_overrides.h
+// (which pulls in TMC/SD-card modules that need real hardware).
+// All stock firmware builds are unaffected (macro undefined).
+#ifdef SIM_HAL_OVERRIDES_FILE
+#include SIM_HAL_OVERRIDES_FILE //simulator override file
+#else
 #include "../cnc_hal_overrides.h" //config override file
+#endif
 #include "modules/ic74hc595.h"		// io extender
 
 	/**

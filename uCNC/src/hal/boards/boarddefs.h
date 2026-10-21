@@ -39,7 +39,13 @@ extern "C"
 #include BOARD
 #endif
 
+// Hosted/Linux simulator builds (see sim-linux/) pass
+// -DSIM_SKIP_BOARDMAP_OVERRIDES to skip the real machine's overrides
+// and configure the MCU/pins via -D flags instead.
+// All stock firmware builds are unaffected (macro undefined).
+#ifndef SIM_SKIP_BOARDMAP_OVERRIDES
 #include "../../../boardmap_overrides.h"
+#endif
 #include "pin_mapping_helper.h"
 #include "../mcus/mcudefs.h" //configures the MCU for the selected board
 
