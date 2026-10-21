@@ -535,8 +535,8 @@ void itp_run(void)
 			float acum = acc_step_acum;
 			acum += acc_step;
 			acc_step_acum = MIN(acum, 0.999f);
-			float new_speed = acc_scale * s_curve_function(acum) + acc_init_speed;
-			new_speed = (t_acc_integrator >= 0) ? (new_speed + acc_init_speed) : (acc_init_speed - new_speed);
+			float new_speed = acc_scale * s_curve_function(acum);
+			new_speed = (t_acc_integrator >= 0) ? (acc_init_speed + new_speed) : (acc_init_speed - new_speed);
 			speed_change = new_speed - current_speed;
 #else
 			speed_change = integrator * itp_cur_plan_block->acceleration;
