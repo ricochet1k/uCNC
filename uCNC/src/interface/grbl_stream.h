@@ -24,7 +24,6 @@ extern "C"
 {
 #endif
 
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdarg.h>
@@ -38,6 +37,10 @@ extern "C"
 #endif
 #define RX_BUFFER_SIZE (RX_BUFFER_CAPACITY + SAFEMARGIN) // buffer sizes
 
+#if RX_BUFFER_SIZE > 255
+#error "RX_BUFFER_SIZE cannot exceed 255"
+#endif
+
 	typedef uint8_t (*grbl_stream_getc_cb)(void);
 	typedef uint8_t (*grbl_stream_available_cb)(void);
 	typedef void (*grbl_stream_clear_cb)(void);
@@ -50,6 +53,7 @@ extern "C"
 		void (*stream_putc)(uint8_t);
 		void (*stream_flush)(void);
 		struct grbl_stream_ *next;
+		bool registered;
 	} grbl_stream_t;
 
 #define DECL_GRBL_STREAM(name, getc_cb, available_cb, clear_cb, putc_cb, flush_cb) grbl_stream_t name = {getc_cb, available_cb, clear_cb, putc_cb, flush_cb, NULL}
@@ -57,13 +61,20 @@ extern "C"
 	void grbl_stream_init();
 
 	void grbl_stream_register(grbl_stream_t *stream);
-	bool grbl_stream_change(grbl_stream_t *stream);
-	bool grbl_stream_readonly(grbl_stream_getc_cb getc_cb, grbl_stream_available_cb available_cb, grbl_stream_clear_cb clear_cb);
-	void grbl_stream_eeprom(uint16_t address);
+	grbl_stream_t *grbl_stream_change(grbl_stream_t *stream);
+	grbl_stream_t *grbl_stream_readonly(grbl_stream_getc_cb getc_cb, grbl_stream_available_cb available_cb, grbl_stream_clear_cb clear_cb);
+	void grbl_stream_eeprom(uint16_t address, bool muted);
 
 	void grbl_stream_start_broadcast(void);
 	void grbl_stream_putc(char c);
-	void grbl_stream_printf(const char* fmt, ...);
+	void grbl_stream_printf(const char *fmt, ...);
+	void grbl_stream_overflow(uint8_t c);
+	void grbl_stream_overflow_flush(void);
+
+	// marks an overflow error on a stream
+#define STREAM_OVF(c)        \
+	grbl_stream_overflow(c); \
+	return
 
 	char grbl_stream_getc(void);
 	char grbl_stream_peek(void);
@@ -83,13 +94,16 @@ extern "C"
 #endif
 
 #ifndef DEBUG_PRELUDE
-#define DEBUG_PRELUDE "[DBG:"
+#define DEBUG_PRELUDE ">"__FILE__"@"STRGIFY(__LINE__)":"
 #endif
 
-// not to be used directly
-void debug_printf(const char *fmt, ...);
-#define DBGMSG(fmt, ...) debug_printf(__romstr__(DEBUG_PRELUDE fmt MSG_FEEDBACK_END), ##__VA_ARGS__)
+	// not to be used directly
+	void debug_printf(const char *fmt, ...);
+	void debug_flush(void);
+#define DBGMSGIF(condition, fmt, ...) do {if(DEBUG_STREAM && DEBUG_STREAM->registered && (condition)){debug_printf(__romstr__(DEBUG_PRELUDE fmt "\n"), ##__VA_ARGS__); debug_flush();}}while(0)
+#define DBGMSG(fmt, ...) DBGMSGIF(true, fmt, ##__VA_ARGS__)
 #else
+#define DBGMSGIF(condition, fmt, ...)
 #define DBGMSG(fmt, ...)
 #endif
 

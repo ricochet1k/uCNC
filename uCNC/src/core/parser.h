@@ -105,8 +105,8 @@ extern "C"
 #define M7 MIST_MASK
 #define M8 COOLANT_MASK
 #define M9 0
-#define M48 1
-#define M49 0
+#define M48 0
+#define M49 1
 
 #define EXTENDED_GCODE_BASE 0
 #define EXTENDED_MCODE_BASE 10000
@@ -121,6 +121,10 @@ extern "C"
 
 #ifndef GRBL_CMD_MAX_LEN
 #define GRBL_CMD_MAX_LEN 32
+#endif
+
+#ifndef MAX_LINE_NUMBER
+#define MAX_LINE_NUMBER 10000000
 #endif
 
 // group masks
@@ -182,11 +186,14 @@ extern "C"
 #define GCODE_JKPLANE_AXIS (GCODE_YZPLANE_AXIS << 8)
 #define GCODE_XYZ_AXIS (GCODE_WORD_X | GCODE_WORD_Y | GCODE_WORD_Z)
 #define GCODE_IJK_AXIS (GCODE_WORD_I | GCODE_WORD_J | GCODE_WORD_K)
+#define GCODE_LPR (GCODE_WORD_L|GCODE_WORD_P|GCODE_WORD_R)
 
-#define LASER_PWM_MODE 1
-#define LASER_PPI_MODE 2
-#define LASER_PPI_VARPOWER_MODE 4
-#define PLASMA_THC_MODE 8
+#define SPINDLE_MODE 0					 // if the tool is not defined it will return as spindle mode
+#define PWM_VARPOWER_MODE 1				 // PWM variable mode will scale the tool power with M4 active
+#define PPI_MODE 2						 // Enables Pulse Per Inch modulation signal
+#define PPI_VARPOWER_MODE 4				 // Will modify the PPI pulse width
+#define PLASMA_THC_MODE 8				 // Enables Plasma THC mode
+#define EMBROIDERY_MODE 16				 // Enables Embroidery mode
 
 #ifdef ENABLE_RS274NGC_EXPRESSIONS
 #ifndef RS274NGC_MAX_USER_VARS
@@ -236,7 +243,7 @@ extern "C"
 		uint8_t units : 1;
 		uint8_t tlo_mode : 1;
 		uint8_t return_mode : 1;
-		uint8_t feed_speed_override : 1;
+		uint8_t feed_speed_ovr_bypass : 1;
 		// 2byte or 1byte
 		uint8_t stopping : 3;
 #if TOOL_COUNT == 1
@@ -288,7 +295,9 @@ extern "C"
 		uint16_t groups;
 		uint16_t words;
 		int16_t group_extended;
-		uint8_t group_0_1_useaxis;
+		uint8_t group_0_1_useaxis:1;
+		uint8_t is_jog:1;
+		uint8_t dry_run:1;
 	} parser_cmd_explicit_t;
 
 	typedef struct
@@ -311,7 +320,8 @@ extern "C"
 	} parser_state_t;
 
 	void parser_init(void);
-	uint8_t parser_read_command(void);
+	uint8_t parser_run_command(void);
+	uint8_t parser_dry_run_command(void);
 	void parser_get_modes(uint8_t *modalgroups, uint16_t *feed, uint16_t *spindle);
 	void parser_get_coordsys(uint8_t system_num, float *axis);
 	bool parser_get_wco(float *axis);
@@ -328,6 +338,8 @@ extern "C"
 	uint8_t parser_get_float(float *value);
 	void parser_discard_command(void);
 	unsigned char parser_get_next_preprocessed(bool peek);
+	void parser_coordinate_system_load(uint8_t param, float *target);
+	void parser_coordinate_system_save(uint8_t param, float *target);
 #ifdef ENABLE_RS274NGC_EXPRESSIONS
 	float parser_get_parameter(uint16_t param);
 	void parser_set_parameter(uint16_t param, float value);

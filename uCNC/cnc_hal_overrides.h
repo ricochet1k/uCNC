@@ -101,6 +101,15 @@ extern "C"
 // #define STEPPER5_BAUDRATE 9600
 
 #define PROBE2 DIN32
+// Combine the main probe and the second (surface) probe for io_get_probe().
+// Upstream's io_control.c uses IO_CONDITION_PROBE and then applies
+// probe_invert_mask to the combined signal; both pins are non-inverted here
+// (PROBE2_INVERT is disabled), so OR-then-invert is equivalent.
+#if ASSERT_PIN(PROBE2)
+#define IO_CONDITION_PROBE (io_get_input(PROBE) || io_get_input(PROBE2))
+#else
+#define IO_CONDITION_PROBE (io_get_input(PROBE))
+#endif
 //#define PROBE2_INVERT
 
 #define LOAD_MODULES_OVERRIDE() ({LOAD_MODULE(m17_m18);LOAD_MODULE(m42);LOAD_MODULE(m62_m65);LOAD_MODULE(m67_m68);LOAD_MODULE(sd_card_v2);LOAD_MODULE(tmc_driver);})

@@ -20,6 +20,7 @@
 #define MCUMAP_VIRTUAL_H
 
 #include <stdint.h>
+#include <stddef.h>
 #define F_CPU 1000000
 #ifndef F_STEP_MAX
 #define F_STEP_MAX 40000
@@ -36,7 +37,10 @@
 #define rom_memcpy memcpy
 #define rom_read_byte *
 
+#define MCU_WEAK __attribute__((weak, weakref))
+
 /* 7.18.2.1  Limits of exact-width integer types */
+#ifndef INT8_MIN
 #define INT8_MIN (-128)
 #define INT16_MIN (-32768)
 #define INT32_MIN (-2147483647 - 1)
@@ -49,8 +53,9 @@
 
 #define UINT8_MAX 255
 #define UINT16_MAX 65535
-#define UINT32_MAX 0xffffffffU					 /* 4294967295U */
+#define UINT32_MAX 0xffffffffU			 /* 4294967295U */
 #define UINT64_MAX 0xffffffffffffffffULL /* 18446744073709551615ULL */
+#endif
 
 // needed by software delays
 #ifndef MCU_CLOCKS_PER_CYCLE
@@ -63,14 +68,26 @@
 #define MCU_CYCLES_PER_LOOP_OVERHEAD 0
 #endif
 
-//#define MCU_HAS_UART
-//#ifndef UART_PORT_NAME
-//#define UART_PORT_NAME "\\\\.\\COM12"
-//#endif
+// #define MCU_HAS_RTOS
+
+// #define MCU_HAS_UART
+#ifndef UART_PORT_NAME
+#ifndef __unix__
+#define UART_PORT_NAME "\\\\.\\COM14"
+#else
+#define UART_PORT_NAME "/dev/ttyS0"
+#endif
+#endif
 
 #define MCU_HAS_UART2
 
+#define ENABLE_SOCKETS
 // #define EMULATE_74HC595
+
+// HTTP IO dashboard (localhost, compile-time configurable)
+#ifndef VIRTUAL_HTTP_PORT
+#define VIRTUAL_HTTP_PORT 8888
+#endif
 
 // joints step/dir pins
 #ifndef EMULATE_74HC595
@@ -258,6 +275,46 @@
 #define DIO77 77
 #define DOUT31 78
 #define DIO78 78
+#define DOUT32 79
+#define DIO79 79
+#define DOUT33 80
+#define DIO80 80
+#define DOUT34 81
+#define DIO81 81
+#define DOUT35 82
+#define DIO82 82
+#define DOUT36 83
+#define DIO83 83
+#define DOUT37 84
+#define DIO84 84
+#define DOUT38 85
+#define DIO85 85
+#define DOUT39 86
+#define DIO86 86
+#define DOUT40 87
+#define DIO87 87
+#define DOUT41 88
+#define DIO88 88
+#define DOUT42 89
+#define DIO89 89
+#define DOUT43 90
+#define DIO90 90
+#define DOUT44 91
+#define DIO91 91
+#define DOUT45 92
+#define DIO92 92
+#define DOUT46 93
+#define DIO93 93
+#define DOUT47 94
+#define DIO94 94
+#define DOUT48 95
+#define DIO95 95
+#define DOUT49 96
+#define DIO96 96
+
+// #define ACTIVITY_LED UNDEF_PIN
+
+#ifndef EMULATE_74HC165
 #define LIMIT_X 100
 #define DIO100 100
 #define LIMIT_Y 101
@@ -286,39 +343,8 @@
 #define DIO112 112
 #define CS_RES 113
 #define DIO113 113
-#define ANALOG0 114
-#define DIO114 114
-#define ANALOG1 115
-#define DIO115 115
-#define ANALOG2 116
-#define DIO116 116
-#define ANALOG3 117
-#define DIO117 117
-#define ANALOG4 118
-#define DIO118 118
-#define ANALOG5 119
-#define DIO119 119
-#define ANALOG6 120
-#define DIO120 120
-#define ANALOG7 121
-#define DIO121 121
-#define ANALOG8 122
-#define DIO122 122
-#define ANALOG9 123
-#define DIO123 123
-#define ANALOG10 124
-#define DIO124 124
-#define ANALOG11 125
-#define DIO125 125
-#define ANALOG12 126
-#define DIO126 126
-#define ANALOG13 127
-#define DIO127 127
-#define ANALOG14 128
-#define DIO128 128
-#define ANALOG15 129
-#define DIO129 129
 #define DIN0 130
+#define DIN0_ISR
 #define DIO130 130
 #define DIN1 131
 #define DIO131 131
@@ -334,6 +360,30 @@
 #define DIO136 136
 #define DIN7 137
 #define DIO137 137
+#else
+#define IC74HC165_COUNT 4
+#define LIMIT_X_IO_OFFSET 0
+#define LIMIT_Y_IO_OFFSET 1
+#define LIMIT_Z_IO_OFFSET 2
+#define LIMIT_A_IO_OFFSET 3
+#define LIMIT_B_IO_OFFSET 4
+#define LIMIT_C_IO_OFFSET 5
+#define PROBE_IO_OFFSET 6
+#define ESTOP_IO_OFFSET 7
+#define SAFETY_DOOR_IO_OFFSET 8
+#define FHOLD_IO_OFFSET 9
+#define CS_RES_IO_OFFSET 10
+#define DIN0_IO_OFFSET 11
+#define DIN1_IO_OFFSET 12
+#define DIN2_IO_OFFSET 13
+#define DIN3_IO_OFFSET 14
+#define DIN4_IO_OFFSET 15
+#define DIN5_IO_OFFSET 16
+#define DIN6_IO_OFFSET 17
+#define DIN7_IO_OFFSET 18
+// #define PWM0_IO_OFFSET 24
+#endif
+
 #define DIN8 138
 #define DIO138 138
 #define DIN9 139
@@ -382,6 +432,74 @@
 #define DIO160 160
 #define DIN31 161
 #define DIO161 161
+#define DIN32 162
+#define DIO162 162
+#define DIN33 163
+#define DIO163 163
+#define DIN34 164
+#define DIO164 164
+#define DIN35 165
+#define DIO165 165
+#define DIN36 166
+#define DIO166 166
+#define DIN37 167
+#define DIO167 167
+#define DIN38 168
+#define DIO168 168
+#define DIN39 169
+#define DIO169 169
+#define DIN40 170
+#define DIO170 170
+#define DIN41 171
+#define DIO171 171
+#define DIN42 172
+#define DIO172 172
+#define DIN43 173
+#define DIO173 173
+#define DIN44 174
+#define DIO174 174
+#define DIN45 175
+#define DIO175 175
+#define DIN46 176
+#define DIO176 176
+#define DIN47 177
+#define DIO177 177
+#define DIN48 178
+#define DIO178 178
+#define DIN49 179
+#define DIO179 179
+#define ANALOG0 114
+#define DIO114 114
+#define ANALOG1 115
+#define DIO115 115
+#define ANALOG2 116
+#define DIO116 116
+#define ANALOG3 117
+#define DIO117 117
+#define ANALOG4 118
+#define DIO118 118
+#define ANALOG5 119
+#define DIO119 119
+#define ANALOG6 120
+#define DIO120 120
+#define ANALOG7 121
+#define DIO121 121
+#define ANALOG8 122
+#define DIO122 122
+#define ANALOG9 123
+#define DIO123 123
+#define ANALOG10 124
+#define DIO124 124
+#define ANALOG11 125
+#define DIO125 125
+#define ANALOG12 126
+#define DIO126 126
+#define ANALOG13 127
+#define DIO127 127
+#define ANALOG14 128
+#define DIO128 128
+#define ANALOG15 129
+#define DIO129 129
 #define TX 200
 #define DIO200 200
 #define RX 201
@@ -398,14 +516,65 @@
 #define DIO206 206
 #define SPI_CS 207
 #define DIO207 207
-#define I2C_SCL 208
+#define I2C_CLK 208
 #define DIO208 208
-#define I2C_SDA 209
+#define I2C_DATA 209
 #define DIO209 209
 #define TX2 210
 #define DIO210 210
 #define RX2 211
 #define DIO211 211
+
+#define DIN0_ISR
+#define DIN1_ISR
+#define DIN2_ISR
+#define DIN3_ISR
+#define DIN4_ISR
+#define DIN5_ISR
+#define DIN6_ISR
+#define DIN7_ISR
+
+/* Per-pin IO model (replaces the packed VIRTUAL_MAP) */
+typedef enum io_pin_type_
+{
+	IO_PIN_UNDEF = 0, /* default */
+	IO_PIN_INPUT,
+	IO_PIN_OUTPUT,
+	IO_PIN_PWM,
+	IO_PIN_SERVO,
+	IO_PIN_ANALOG
+} io_pin_type_t;
+
+typedef struct io_pin_
+{
+	uint8_t type;   /* io_pin_type_t */
+	uint16_t value; /* input/output 0-1, pwm/servo 0-255, analog 0-1023 */
+	char vcd_char;  /* VCD log char */
+} io_pin_t;
+
+#define IO_PIN_COUNT 212
+
+extern volatile io_pin_t io_pins[IO_PIN_COUNT];
+
+typedef enum io_pin_group_
+{
+	IO_GROUP_HIDDEN = 0, /* comms pins + undefined gaps */
+	IO_GROUP_STEPDIR,    /* step/dir/enable */
+	IO_GROUP_PWM_SERVO,  /* pwm and servo */
+	IO_GROUP_OUTPUT,     /* generic outputs */
+	IO_GROUP_CONTROL,    /* limits/probe/estop/safety/fhold/csres */
+	IO_GROUP_INPUT,      /* generic inputs */
+	IO_GROUP_ANALOG      /* analog inputs */
+} io_pin_group_t;
+
+typedef struct io_pin_info_
+{
+	const char *label;
+	io_pin_group_t group;
+	io_pin_type_t default_type;
+} io_pin_info_t;
+
+extern const io_pin_info_t io_pin_info[IO_PIN_COUNT];
 
 #define MCU_HAS_ONESHOT_TIMER
 
@@ -415,13 +584,17 @@
 #ifndef ENABLE_PARSER_MODULES
 #define ENABLE_PARSER_MODULES
 #endif
+
+#ifndef MCU_HAS_FLASHUPDATE
+#define MCU_HAS_FLASHUPDATE
+#endif
+
 #define DISABLE_SYSTEM_MENU
 #define freefile_ptr(x)
 
 // just to compile
 #define mcu_nop()
 #define mcu_config_pullup(diopin)
-#define mcu_config_analog(diopin)
 #define asm __asm__
 #define mcu_config_input_isr(x)
 
@@ -429,10 +602,123 @@
 extern void virtual_delay_us(uint16_t delay);
 #define mcu_delay_us(X) virtual_delay_us(X)
 
+#define ENABLE_ITP_FEED_TASK // smoother STEP IO simulation
+
 #include "../../tools/tool.h"
-extern const tool_t spindle_pwm;
+extern const tool_t embroidery_stepper;
 extern const tool_t laser_ppi;
+extern const tool_t laser_pwm;
+extern const tool_t pen_servo;
+extern const tool_t plasma_thc;
+extern const tool_t spindle_besc;
+extern const tool_t spindle_pwm;
+extern const tool_t spindle_relay;
+extern const tool_t vfd_modbus;
+extern const tool_t vfd_pwm;
+
+#define ATOMIC_LOAD_N(src, mode) __atomic_load_n((src), mode)
+#define ATOMIC_STORE_N(dst, val, mode) __atomic_store_n((dst), (val), mode)
+#define ATOMIC_COMPARE_EXCHANGE_N(dst, cmp, des, sucmode, failmode) __atomic_compare_exchange_n((dst), (void *)(cmp), (des), false, sucmode, failmode)
+#define ATOMIC_FETCH_OR(dst, val, mode) __atomic_fetch_or((dst), (val), mode)
+#define ATOMIC_FETCH_AND(dst, val, mode) __atomic_fetch_and((dst), (val), mode)
+#define ATOMIC_FETCH_ADD(dst, val, mode) __atomic_fetch_add((dst), (val), mode)
+#define ATOMIC_FETCH_SUB(dst, val, mode) __atomic_fetch_sub((dst), (val), mode)
+#define ATOMIC_FETCH_XOR(dst, val, mode) __atomic_fetch_xor((dst), (val), mode)
+
+#define EMULATION_MS_TICK 100
+
+#define ATOMIC_LOAD_N(src, mode) __atomic_load_n((src), mode)
+#define ATOMIC_STORE_N(dst, val, mode) __atomic_store_n((dst), (val), mode)
+#define ATOMIC_COMPARE_EXCHANGE_N(dst, cmp, des, sucmode, failmode) __atomic_compare_exchange_n((dst), (void *)(cmp), (des), false, sucmode, failmode)
+#define ATOMIC_FETCH_OR(dst, val, mode) __atomic_fetch_or((dst), (val), mode)
+#define ATOMIC_FETCH_AND(dst, val, mode) __atomic_fetch_and((dst), (val), mode)
+#define ATOMIC_FETCH_ADD(dst, val, mode) __atomic_fetch_add((dst), (val), mode)
+#define ATOMIC_FETCH_SUB(dst, val, mode) __atomic_fetch_sub((dst), (val), mode)
+#define ATOMIC_FETCH_XOR(dst, val, mode) __atomic_fetch_xor((dst), (val), mode)
+#define ATOMIC_SPIN()
 
 #define asm __asm__
+
+// #ifdef __unix__
+// // #ifndef sqrtf
+// // #define sqrtf sqrt
+// // #endif
+// #endif
+
+#ifdef PIO_UNIT_TESTING
+uint32_t mcu_micros(void);
+// injects a new command to the unit test input stream buffer
+bool mcu_unit_test_inject(const char *cmd);
+// gets a pointer to the unit test output stream buffer
+const char *mcu_unit_test_buffer(void);
+// copies a stable, NUL-terminated output snapshot and returns its length
+size_t mcu_unit_test_buffer_read(char *destination, size_t capacity);
+// reports whether output was dropped because the transcript filled
+bool mcu_unit_test_buffer_overflowed(void);
+// clears the unit test output stream buffer
+void mcu_unit_test_buffer_clear(void);
+// returns an immutable position in the test output stream
+uint64_t mcu_unit_test_output_cursor(void);
+// waits in host time for output beyond cursor, without advancing virtual time
+bool mcu_unit_test_wait_for_output(uint64_t cursor, uint32_t timeout_ms);
+// copies output emitted at or after cursor into a stable, NUL-terminated buffer
+size_t mcu_unit_test_buffer_read_since(uint64_t cursor, char *destination, size_t capacity);
+// resets the deterministic Unity-test clock and discards pending timed events
+void mcu_unit_test_clock_reset(void);
+// restores virtual test-only MCU state while the controller worker is quiescent
+void mcu_unit_test_runtime_reset(void);
+// advances the deterministic Unity-test clock and executes due MCU callbacks
+void mcu_unit_test_advance_time(uint32_t microseconds);
+// schedules a callback on the deterministic Unity-test clock
+void mcu_add_event(uint32_t delay_us, void (*callback)(void *args), void *args);
+
+typedef enum
+{
+	TEST_IO_ESTOP = 1,
+	TEST_IO_SAFETY_DOOR,
+	TEST_IO_FHOLD,
+	TEST_IO_CS_RES,
+	TEST_IO_PROBE,
+
+	TEST_IO_LIMIT_X,
+	TEST_IO_LIMIT_X2,
+	TEST_IO_LIMIT_Y,
+	TEST_IO_LIMIT_Y2,
+	TEST_IO_LIMIT_Z,
+	TEST_IO_LIMIT_Z2,
+	TEST_IO_LIMIT_A,
+	TEST_IO_LIMIT_B,
+	TEST_IO_LIMIT_C,
+
+	TEST_IO_COUNT
+} test_io_id_t;
+
+bool test_io_condition(test_io_id_t input);
+// resets all emulated IO pins
+void test_io_reset(void);
+// sets a IO emulated pin value
+void test_io_set(test_io_id_t input, bool value);
+// sets a IO emulated pin value deferred in time by <delay_ms>
+void test_io_set_after(test_io_id_t input, uint32_t delay_ms, bool initial_value, bool final_value);
+
+typedef bool (*test_io_callback_t)(void);
+void test_io_set_callback(test_io_id_t input, test_io_callback_t cb);
+
+#define IO_CONDITION_ESTOP	   test_io_condition(TEST_IO_ESTOP)
+#define IO_CONDITION_SAFETY_DOOR test_io_condition(TEST_IO_SAFETY_DOOR)
+#define IO_CONDITION_FHOLD	   test_io_condition(TEST_IO_FHOLD)
+#define IO_CONDITION_CS_RES	   test_io_condition(TEST_IO_CS_RES)
+#define IO_CONDITION_PROBE	   test_io_condition(TEST_IO_PROBE)
+
+#define IO_CONDITION_LIMIT_X	 test_io_condition(TEST_IO_LIMIT_X)
+#define IO_CONDITION_LIMIT_X2	test_io_condition(TEST_IO_LIMIT_X2)
+#define IO_CONDITION_LIMIT_Y	 test_io_condition(TEST_IO_LIMIT_Y)
+#define IO_CONDITION_LIMIT_Y2	test_io_condition(TEST_IO_LIMIT_Y2)
+#define IO_CONDITION_LIMIT_Z	 test_io_condition(TEST_IO_LIMIT_Z)
+#define IO_CONDITION_LIMIT_Z2	test_io_condition(TEST_IO_LIMIT_Z2)
+#define IO_CONDITION_LIMIT_A	 test_io_condition(TEST_IO_LIMIT_A)
+#define IO_CONDITION_LIMIT_B	 test_io_condition(TEST_IO_LIMIT_B)
+#define IO_CONDITION_LIMIT_C	 test_io_condition(TEST_IO_LIMIT_C)
+#endif
 
 #endif

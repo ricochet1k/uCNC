@@ -6,6 +6,365 @@
 
 # Changelog
 
+## [1.17.2] - 10-10-2026
+
+### Added
+
+- Added pin configuration PIO tests (#997)
+
+### Fixed
+
+- fixed ESP32 PIO build caused by PIO registry changes and errors (#998)
+- fixed stepper enable pin initialization to happen after the actual settings are loaded (#998)
+- modified real time command processing to prevent command drop/overlapping (#998)
+- fixed SAMD21 USB putc and flush functions implementation that lead to communications freezes on other streams (#999)
+- fixed SAMD21 oneshot timer that was running at half the intended speed (#999)
+- fixed servo value wrapping on values above 127 on SAMD21  (#999)
+- fixed SAMD21 PIO build caused by PIO registry changes and errors (#999)
+
+## [1.17.1] - 28-09-2026
+
+### Changed
+
+- Added overloadable µCNC pins for RPico PIO IO extender (#994)
+
+### Fixed
+
+- fixed SPI pin initialization (#988)
+- fixed tool coolant pin intialization (#993)
+- fixed all generic output pin initialization (#996)
+- RPico Wifi fix ENABLE_WIFI and ENABLE_SOCKET mix and Flash Updater independency (#992)
+
+## [1.17.0] - 02-09-2026
+
+### Added
+
+- new network TCP socket based API. This new API provides a common Telnet/WebSocket/Http and raw socket implementation exposing an hardware API backend that can be implemented using LwIP/BSD/other network libraries. (#923) (#982) (#984) (#983)
+- added new unity tests suite to perform some compliance Grbl protocol checkings. These unity tests are also executed on commits and PR merging checks (#988)
+- new motion segmentation strategies an new Lathe motion mode to allow iter-dependent axis/spindle non-linear motions (#966)
+
+### Changed
+
+- reworked initialization calls to align Debug streams, settings loading, network initialization and server listeners startup (#980)
+- minor changes to the encoder module to allow hardware independency on all encoders (#977)
+
+### Fixed
+
+- fixed STM32 PIO build issues due to deleted/erased versions of certain framework packets (#989)
+- fixed ESP8266 wifi random crash due to WiFi task starving (#984)
+- several parser/error report fixes based on the unity tests results (#988)
+
+
+## [1.16.6] - 23-07-2026
+
+[@nakanotakuo](https://github.com/nakanotakuo)	- added MKS Monster8 V2 board configuration (#976) and fixes (#971)(#974) and (#975)
+
+### Added
+
+- added MKS Monster8 V2 board configuration (#976)
+
+### Fixed
+
+- Fixed AVR limits ISR mapping (#971)
+- Fixed IO control conditional filter assertion (#973)
+- Fixed planner compilation with FORCE_GLOBALS_TO_0 (#974)
+- Forced default settings values to be loaded on EEPROM read fail (#975)
+
+## [1.16.5] - 03-06-2026
+
+### Fixed
+
+- Force tool stop on safety door open (#967)
+- Fixed realtime tool speed override (#965)
+- Modified override bypass logic (M48/M49) and fixed tool speed override intergration (#964)
+
+## [1.16.4] - 16-05-2026
+
+### Fixed
+
+- Reverted PendSV task on RP2040 since this caused the MCU to freeze (#963)
+
+## [1.16.3] - 13-05-2026
+
+### Added
+
+- added mellow Fly D5 board configuration (#955)
+- new option to unlock extra status message states (Dwell, Probe, Hold:2) (#961)
+
+### Changed
+
+- added missing hard defaults configurations (#954)
+- full internal CNC state and interlocking revision (#961)
+- modified ARM RTC callback to a low priority event (#951)
+
+### Fixed
+
+- fixed SAMD21 input ISR configuration (#956)
+- fixed SAMD21 PWM TCC configurations (#958)
+- fixed HOLD recalculation bug for segmented motions (#960)
+- fixed AVR UART2 TX ISR (unhadled ISR) (#962)
+
+## [1.16.2] - 07-04-2026
+
+### Changed
+
+- updated ESP32 base environment (#943)
+- improved encoder RPM return to 0 update speed (#948)
+
+### Fixed
+
+- fixed ESP32 oneshot timeout configuration (#947)
+- fixed RP2040 mcu_micros macro (#949)
+- fixed RP2040 oneshot timeout configuration (#950)
+- fixed STM32 MCU's step interpolation timeout calculations (#953)
+
+## [1.16.1] - 20-03-2026
+
+### Fixed
+
+- fixed encoder not getting to 0 RPM after first successfull reading and added option to set a minimal RPM value before stop reading valid RPM values (#939) (#942)
+- fixed ESP32 I2S glich by increasing the DMA buffer size (#941)
+- fixed cnc store/restore functions with option ENABLE_ITP_FEED_TASK (#937)
+
+## [1.16.0] - 17-03-2026
+
+[@HuubBuis](https://github.com/HuubBuis)	- added option to mimic Grbl homing motion style via `ENABLE_GRBL_STYLE_HOMING` (#918)
+
+### Added
+
+- added option to clamp motion beyond software limits while jogging `ALLOW_SOFT_LIMIT_JOG_MOTION_CLAMPING` (#907)
+- added static IP configuration for Wifi capable boards (#908)
+- added method for mesuring software encoders RPM (#913)(#924)(#928)(#933)(#934)
+- added option to mimic Grbl homing motion style via `ENABLE_GRBL_STYLE_HOMING` (#918)(#922)(#930)
+
+### Changed
+
+- modified input-on-change ISR on AVR to correctly support other MCU's (#915)
+- improved `mcu_step_cb` function and full revision of the interpolation ISR on all architectures (#919)
+- modified ISR architecture on AVR to allow better response and propper preemption with `ENABLE_ITP_FEED_TASK` enabled (#920)
+- ISR architecture revision on all ARM MCU's following #920 changes (#921)
+- improved ONESHOT timer resolution on AVR (#935)
+
+### Fixed
+
+- fixed synchronization flags on realtime motions (#910)
+- fixed ESP32 oneshot timer errors (#911) (#912)
+- fixed synchronized motions start logic (#914)
+- fixed probe report message sequence to better emulate Grbl (#909)
+- fixed stepper idle timeout condition check (#916)
+- fixed realtime motion feed modifications calculations (#925)(#936)
+- fixed signed interger printf function (#926)
+- fixed UART2 typo for STM32F0x and default BAUDRATE2 definition (#926)
+- fixed USB dotasks for STM32F0x (#932)
+
+## [1.15.0] - 20-01-2026
+
+### Added
+
+- added new embroidery tool mode (#) and new embroidery tool based on a stepper motor to control the needle (#897)
+- added new encoder module enhancements with support for I2C and SSI encoders (#848)
+- added new tool hooks callback to allow implementation of custom ATC (automatic tool changer) modules (#905)
+- added new planner event that allows modification of the current motion block before being sent to step generation (#904)
+
+### Changed
+
+- dropped `STEP_ISR_SKIP_MAIN` and `STEP_ISR_SKIP_IDLE` options and removed code from interpolator (#904)
+
+### Fixed
+
+- fixed system menu position reporting to match encoders position (#904)
+- fixed compilation error with option `DISABLE_SAFE_SETTINGS` (#903)
+
+## [1.14.0] - 07-01-2026
+
+### Added
+
+- added new atomic primitives (similar to C11) including atomic CAS and basic semaphores (#885)
+- added ring buffer non-blocking methods (#885)
+- added ISR context aware mcu calls (#885)
+- added new Grbl compatibility level (now can be raised to level 3 - less safety strick) (#885)
+
+### Changed
+
+- modified ring buffer to be MPMC-Multi producer/Multi consumer safe (#885)
+- removed rtc_tick event (#885)
+- interpolator now runs on the RTC ISR/thread by default if ENABLE_MAIN_LOOP_MODULES is enabled(#885)
+
+### Fixed
+
+- fixed RP2040/2350 multicore (#885)
+- fixed ITP timer prescaller calculation (#885)
+- fixed general alarm handler to prevent missing alarms that about to trigger (#885)
+- fixed ESP32 WiFi (#885)
+- fixed ESP32-C3 ITP timer (#885)
+
+## [1.13.1] - 28-11-2025
+
+### Added
+
+- added ABC axis speed profile decoupling option to fix incorrect speed profiles with rotational axis via `ABC_INDEP_FEED_CALC` (#892)
+
+### Fixed
+
+- fixed ESP32 PIO configuration that lead to several WiFi issues (#899)
+- fixed some redefinition warings while compiling code for ESP32(#896)
+
+## [1.13.0] - 07-11-2025
+
+[@reinforce](https://github.com/reinforce)	- fix compilation errors on RP2040 and 2350 (#894) and fixed file name typo on ESP32 (#889)
+
+### Added
+
+- added support for 74HC595 custom I2S driver for ESP32-S3 and ESP32-C3 (#895)
+
+### Changed
+
+- redesigned ESP32 I2S driver for the 74HC595. It now uses the the DMA ISR instead of the built in generic driver and thread to keep the buffer fill and switch modes (#895)
+- redesigned ESP8266 outputs signal generation based on the new timer struct used on ESP32 (#895)
+
+### Fixed
+
+- fixed compilation errors on RP2040 and RP2350 (#894)
+- fixed timer configurations for ESP32 (#893)
+- fixed setting $11 (G64 factor) to accept negative values (#891)
+- fixed file name typo on ESP32 (#889)
+- implemented missing get and set servo values on RPi MCU's (#890)
+- fixed interpolation bug on ESP8266 (#887)
+
+## [1.13.rc] - 06-10-2025
+
+### Added
+
+- added basic core support for ESP32-S3 and ESP32-C3 MCU's (#881)
+
+### Changed
+
+- cycle loops modified to improve loop precision, based on inline assembly instructions or running free CPU cycle counters. These are CPU cycle loops that are used for very small (usually less then 2 or microseconds) (#884)
+
+## [1.12.4] - 07-08-2025
+
+### Added
+
+- added boardmap settings to use the shield v3 on Arduino Mega (#876)
+- added multiline startup blocks support (#877)
+- added sequential settings modification command with support for multivalue (array of values) (#878)
+
+### Fixed
+
+- fixed/improved stream overflow detection and handling (#875)
+
+## [1.12.3] - 26-06-2025
+
+### Added
+
+- allow storing HMapping (G39) in non volatile memory (Grbl settings) (#865)
+
+### Fixed
+
+- fixed block speed synchronization in the interpolator after (planner block transition speed synchronization) (#873)
+
+
+## [1.12.2] - 05-05-2025
+
+### Added
+
+- added boardmap support for Fysetc Cheetah v2 (#856)
+- added new logic IO conditions macros. This allows users to define custom logic for limits, control and probe pins (#863)
+
+### Changed
+
+- disable softlimits checking for dimensions set to 0/infinit limit (#860)
+
+### Fixed
+
+- fixed status report format when tool count is set to 0 (#859)
+- fixed status report format print for axis count lower then 3 (#861) (#862)
+
+## [1.12.1] - 01-04-2025
+
+### Added
+
+- added DISABLE_EEPROM_EMULATION option on STM32 to allow EEPROM emulation disabling while allowing to add an external settings NVM support like SD card or external Flash/EEPROM (#849)
+- added support for STM32H723 chip (and SKR3 board - untested) (#853)
+- added new probing override callback that allows to add and remove custom probing methods besides the PROBE pin input (#855)
+- added Plasma THC tool M101 (THC enable) and M102 (THC disable) commands (#855)
+
+### Changed
+
+- modified Plasma THC tool to become independent of the M62-M65 module command (#855)
+
+### Fixed
+
+- fixed parser position update after G28/G30 command (#847)
+- fixed limits inversion mask to match limits masking when custom masks are used (#850)
+- fixed settings print of integer array values (#854)
+
+## [1.12.0] - 10-03-2025
+
+[@DevanshGarg31](https://github.com/DevanshGarg31)	- added RTheta kinematics (#839)
+
+### Added
+
+- new shift register module that allows not only to add output IO extensions via 74HC595 but also input IO extensions via 74HC165 (#831)
+- added initial support for STM32H7 single core family. This core is still incomplete and is missing some features, SPI DMA and EEPROM emulation (#837) (#846)
+- added RTheta kinematics (#839) (#845)
+
+### Changed
+
+- re-introduced boards friendly names for configuration via Arduino IDE and make files (#834)
+- ESP8266 full core code refactoring with a new custom integration for the new shift register via SPI allowing for mor IO on this MCU (#835)
+- improved loop cycle macro (#799)
+- modified Kinematics settings to be able to define custom settings for kinematics in the kinematics definition file, without the need to change several files (#840)
+
+### Fixed
+
+- fixed softspi speed and mode functions to force settings update on hardware ports (#838)
+- fixed integration of G28.1/G30.1 module and G28/G30 parser execution (#843) (#844)
+- fixed integer array formated print (#842)
+
+## [1.11.2] - 25-01-2025
+
+### Added
+
+- added option to allow rotational axis to ignore limits after homing (#803)
+- added option to use HW SPI on digipot module (#808)
+
+### Changed
+
+- improved settings variable types code readability (#821)
+- improved homing error codes output/logic (#804)
+- modified ESP8266 to use direct GPIO registers (#800)
+
+### Fixed
+
+- fixed var type in some homing settings that caused incorrect value report/storing (#819)
+- fixed SPI typo on ESP8266 bulk send (#800)
+- fixed compilation error with TOOL_COUNT set to 0 (#814)
+- fixed parsing validation for extended commands with axis words (#809)
+- fixed 74hc595 module to get pin value mask (#797)
+- fixed kinematics default settings values for DELTA types (switched) (#796)
+
+## [1.11.1] - 13-12-2024
+
+[@tomjnixon](https://github.com/tomjnixon)	- fixed ignored G53 introduced by #791 (#793)
+																						- fixed status report mask setting introduced in v1.11 (#789)
+
+### Changed
+
+- minor improvements the the AVR ini file and better comments (#784)
+- change to the parser to unify G92 and G10 processing path (#791)
+
+### Fixed
+
+- fixed M2/M30 command behavior to match LinuxCNC (#786)
+- fixed status report Tool info (#787)
+- fixed status report mask setting introduced in v1.11 (#789)
+- fixed G10 L20 behavior when the current modal distance mode is in incremental mode (#791)
+- fixed cycle feed and spindle update in a canned cycle (#788)
+- fixed/improved motion mode validation (#792)
+- fixed ignored G53 introduced by #791 (#793)
+- fixed step generation ISR algorithm for LPC17XX (#794)
+
 ## [1.11.0] - 20-11-2024
 
 ### Added
@@ -1805,6 +2164,29 @@ Version 1.1.0 comes with many added features and improvements over the previous 
 
 ### Initial release
 
+[1.17.2]: https://github.com/Paciente8159/uCNC/releases/tag/v1.17.2
+[1.17.1]: https://github.com/Paciente8159/uCNC/releases/tag/v.1.17.1
+[1.17.0]: https://github.com/Paciente8159/uCNC/releases/tag/v1.17.0
+[1.16.6]: https://github.com/Paciente8159/uCNC/releases/tag/v1.16.6
+[1.16.5]: https://github.com/Paciente8159/uCNC/releases/tag/v1.16.5
+[1.16.4]: https://github.com/Paciente8159/uCNC/releases/tag/v1.16.4
+[1.16.3]: https://github.com/Paciente8159/uCNC/releases/tag/v1.16.3
+[1.16.2]: https://github.com/Paciente8159/uCNC/releases/tag/v1.16.2
+[1.16.1]: https://github.com/Paciente8159/uCNC/releases/tag/v1.16.1
+[1.16.0]: https://github.com/Paciente8159/uCNC/releases/tag/v1.16.0
+[1.15.0]: https://github.com/Paciente8159/uCNC/releases/tag/v1.15.0
+[1.14.0]: https://github.com/Paciente8159/uCNC/releases/tag/v1.14.0
+[1.13.1]: https://github.com/Paciente8159/uCNC/releases/tag/v1.13.1
+[1.13.1]: https://github.com/Paciente8159/uCNC/releases/tag/v1.13.1
+[1.13.0]: https://github.com/Paciente8159/uCNC/releases/tag/v1.13.0
+[1.13.rc]: https://github.com/Paciente8159/uCNC/releases/tag/v1.13.rc
+[1.12.4]: https://github.com/Paciente8159/uCNC/releases/tag/v1.12.4
+[1.12.3]: https://github.com/Paciente8159/uCNC/releases/tag/v1.12.3
+[1.12.2]: https://github.com/Paciente8159/uCNC/releases/tag/v1.12.2
+[1.12.1]: https://github.com/Paciente8159/uCNC/releases/tag/v1.12.1
+[1.12.0]: https://github.com/Paciente8159/uCNC/releases/tag/v1.12.0
+[1.11.2]: https://github.com/Paciente8159/uCNC/releases/tag/v1.11.2
+[1.11.1]: https://github.com/Paciente8159/uCNC/releases/tag/v1.11.1
 [1.11.0]: https://github.com/Paciente8159/uCNC/releases/tag/v1.11.0
 [1.11.0-rc]: https://github.com/Paciente8159/uCNC/releases/tag/v1.11.0-rc
 [1.10.2]: https://github.com/Paciente8159/uCNC/releases/tag/v1.10.2

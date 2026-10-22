@@ -22,13 +22,14 @@
 #include "modules/digipot.h"
 #include "modules/encoder.h"
 #include "modules/pid.h"
-#include "modules/ic74hc595.h"
+#include "modules/shift_register.h"
 #include "modules/modbus.h"
 #include "modules/softi2c.h"
 #include "modules/softspi.h"
 #include "modules/softuart.h"
 #include "modules/system_languages.h"
 #include "modules/system_menu.h"
+#include "modules/flash_update.h"
 
 uint8_t g_module_lockguard;
 /**
@@ -48,6 +49,7 @@ static FORCEINLINE void load_modules(void)
 void mod_init(void)
 {
 	g_module_lockguard = 0;
+
 #ifdef ENABLE_DIGITAL_MSTEP
 	LOAD_MODULE(digimstep);
 #endif
@@ -73,7 +75,21 @@ void mod_init(void)
 	LOAD_MODULE(file_system);
 #endif
 
+#ifdef MCU_HAS_FLASHUPDATE
+	LOAD_MODULE(flash_update);
+#endif
+
 	load_modules();
+
+	/**
+	 * not needed as EXTENDED_SETTING_INIT preloads the extended setting
+	 *  */
+
+	// #ifdef ENABLE_SETTINGS_MODULES
+	// 	// force extended settings loading event
+	// 	// by setting the destination to NULL it will not reload g_settings again to avoid re-reading this area again
+	// 	settings_load(SETTINGS_ADDRESS_OFFSET, NULL, 0);
+	// #endif
 }
 
 #ifdef MODULE_DEBUG_ENABLED

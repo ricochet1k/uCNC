@@ -29,13 +29,17 @@ extern "C"
 #define MCU_STM32F1X 10
 #define MCU_STM32F4X 11
 #define MCU_STM32F0X 12
+#define MCU_STM32H7X 13
 #define MCU_SAMD21 20
 #define MCU_LPC176X 30
 #define MCU_ESP8266 40
 #define MCU_ESP32 50
+#define MCU_ESP32C3 51
+#define MCU_ESP32S3 52
 #define MCU_RP2040 60
 #define MCU_RP2350 61
-#define MCU_VIRTUAL_WIN 99
+#define MCU_VIRTUAL_WIN 1000
+#define MCU_VIRTUAL_LINUX 2000
 
 #ifdef __cplusplus
 }

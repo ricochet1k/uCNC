@@ -69,8 +69,13 @@ extern "C"
 #define SYSTEM_MENU_ID_IDLE 0
 #define SYSTEM_MENU_ID_MAIN_MENU 1
 #define SYSTEM_MENU_ID_SETTINGS 2
+#define SYSTEM_MENU_ID_HOMING 3
+#define SYSTEM_MENU_ID_STEPPER_SETTINGS 4
+#define SYSTEM_MENU_ID_KINEMATIC_SETTINGS 5
+#define SYSTEM_MENU_ID_IO_SETTIGNS 6
 #define SYSTEM_MENU_ID_JOG 7
 #define SYSTEM_MENU_ID_OVERRIDES 8
+#define SYSTEM_MENU_ID_MISC_SETTINGS 9
 
 #define SYSTEM_MENU_ACTION_NONE 0
 #define SYSTEM_MENU_ACTION_SELECT 1
@@ -92,6 +97,8 @@ extern "C"
 #define VAR_TYPE_UINT32 6
 #define VAR_TYPE_INT32 7
 #define VAR_TYPE_FLOAT 8
+// float that accepts negative values (used for settings that allow them)
+#define VAR_TYPE_FLOAT_SIGNED 9
 
 #define CONST_VARG(X) ((void *)X)
 #if (__SIZEOF_POINTER__ == 2)
