@@ -26,6 +26,13 @@
 
 #if (UCNC_MODULE_VERSION < 11090 || UCNC_MODULE_VERSION > 99999)
 #error "This module is not compatible with the current version of µCNC"
+#elif (UCNC_MODULE_VERSION >= 11400 && UCNC_MODULE_VERSION < 999999)
+// backward compatibility
+#ifndef __ATOMIC__
+#define __ATOMIC__ ATOMIC_CODEBLOCK
+#endif
+#else
+#error "This module is not compatible with the current version of µCNC"
 #endif
 
 #ifdef ENABLE_TMC_DRIVER_MODULE
@@ -52,7 +59,6 @@
 				data[i] = softuart_getc(&tmc##CHANNEL##_uart, TMC_UART_TIMEOUT(STEPPER##CHANNEL##_BAUDRATE)); \
 			}                                                                                               \
 			io_config_output(STEPPER##CHANNEL##_UART_TX);                                                   \
-			io_set_output(STEPPER##CHANNEL##_UART_TX);                                                      \
 		}                                                                                                 \
 		stepper##CHANNEL##_deselect();                                                                    \
 		cnc_delay_ms(TMC_UART_TIMEOUT(STEPPER##CHANNEL##_BAUDRATE));                                      \
@@ -373,134 +379,118 @@ bool m350_exec(void *args)
 		itp_sync();
 		if (!ptr->cmd->words)
 		{
-#ifdef STEPPER0_HAS_TMC
-			int32_t val0 = tmc_get_microstep(&tmc0_driver);
-#endif
-#ifdef STEPPER1_HAS_TMC
-			int32_t val1 = tmc_get_microstep(&tmc1_driver);
-#endif
-#ifdef STEPPER2_HAS_TMC
-			int32_t val2 = tmc_get_microstep(&tmc2_driver);
-#endif
-#ifdef STEPPER3_HAS_TMC
-			int32_t val3 = tmc_get_microstep(&tmc3_driver);
-#endif
-#ifdef STEPPER4_HAS_TMC
-			int32_t val4 = tmc_get_microstep(&tmc4_driver);
-#endif
-#ifdef STEPPER5_HAS_TMC
-			int32_t val5 = tmc_get_microstep(&tmc5_driver);
-#endif
-#ifdef STEPPER6_HAS_TMC
-			int32_t val6 = tmc_get_microstep(&tmc6_driver);
-#endif
-#ifdef STEPPER7_HAS_TMC
-			int32_t val7 = tmc_get_microstep(&tmc7_driver);
-#endif
-			bool need_comma = false;
-			(void)need_comma; // silence unused warning
+			int32_t val = 0;
 			// if no additional args then print the
 			proto_print("[MICROSTEPS:");
-#ifdef STEPPER0_HAS_TMC
+			val = 0;
 			proto_putc('X');
-			proto_itoa(val0);
-			need_comma = true;
+#ifdef STEPPER0_HAS_TMC
+			val = tmc_get_microstep(&tmc0_driver);
 #endif
-#ifdef STEPPER1_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_itoa(val);
+			proto_putc(',');
+			val = 0;
 			proto_putc('Y');
-			proto_itoa(val1);
-			need_comma = true;
+#ifdef STEPPER1_HAS_TMC
+			val = tmc_get_microstep(&tmc1_driver);
 #endif
-#ifdef STEPPER2_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_itoa(val);
+			proto_putc(',');
+			val = 0;
 			proto_putc('Z');
-			proto_itoa(val2);
-			need_comma = true;
+#ifdef STEPPER2_HAS_TMC
+			val = tmc_get_microstep(&tmc2_driver);
 #endif
-#ifdef STEPPER3_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_itoa(val);
+			proto_putc(',');
+			val = 0;
 			proto_putc('A');
-			proto_itoa(val3);
-			need_comma = true;
+#ifdef STEPPER3_HAS_TMC
+			val = tmc_get_microstep(&tmc3_driver);
 #endif
-#ifdef STEPPER4_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_itoa(val);
+			proto_putc(',');
+			val = 0;
 			proto_putc('B');
-			proto_itoa(val4);
-			need_comma = true;
+#ifdef STEPPER4_HAS_TMC
+			val = tmc_get_microstep(&tmc4_driver);
 #endif
-#ifdef STEPPER5_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_itoa(val);
+			proto_putc(',');
+			val = 0;
 			proto_putc('C');
-			proto_itoa(val5);
-			need_comma = true;
+#ifdef STEPPER5_HAS_TMC
+			val = tmc_get_microstep(&tmc5_driver);
 #endif
-#ifdef STEPPER6_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_itoa(val);
+			proto_putc(',');
+			val = 0;
 			proto_putc('I');
-			proto_itoa(val6);
-			need_comma = true;
+#ifdef STEPPER6_HAS_TMC
+			val = tmc_get_microstep(&tmc6_driver);
 #endif
-#ifdef STEPPER7_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_itoa(val);
+			proto_putc(',');
+			val = 0;
 			proto_putc('J');
-			proto_itoa(val7);
+#ifdef STEPPER7_HAS_TMC
+			val = tmc_get_microstep(&tmc7_driver);
 #endif
+			proto_itoa(val);
 			proto_putc(']');
-			proto_putc('\r');
 			proto_putc('\n');
+			proto_putc('\r');
 		}
 		else
 		{
-#ifdef STEPPER0_HAS_TMC
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_X))
 			{
-				tmc0_settings.mstep = (int16_t)ptr->words->xyzabc[0];
-			}
+#ifdef STEPPER0_HAS_TMC
+				tmc0_settings.mstep = (uint8_t)ptr->words->xyzabc[0];
 #endif
-#ifdef STEPPER1_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_Y))
 			{
-				tmc1_settings.mstep = (int16_t)ptr->words->xyzabc[1];
-			}
+#ifdef STEPPER1_HAS_TMC
+				tmc1_settings.mstep = (uint8_t)ptr->words->xyzabc[1];
 #endif
-#ifdef STEPPER2_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_Z))
 			{
-				tmc2_settings.mstep = (int16_t)ptr->words->xyzabc[2];
-			}
+#ifdef STEPPER2_HAS_TMC
+				tmc2_settings.mstep = (uint8_t)ptr->words->xyzabc[2];
 #endif
-#ifdef STEPPER3_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_A))
 			{
-				tmc3_settings.mstep = (int16_t)ptr->words->xyzabc[3];
-			}
+#ifdef STEPPER3_HAS_TMC
+				tmc3_settings.mstep = (uint8_t)ptr->words->xyzabc[3];
 #endif
-#ifdef STEPPER4_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_B))
 			{
-				tmc4_settings.mstep = (int16_t)ptr->words->xyzabc[4];
-			}
+#ifdef STEPPER4_HAS_TMC
+				tmc4_settings.mstep = (uint8_t)ptr->words->xyzabc[4];
 #endif
-#ifdef STEPPER5_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_C))
 			{
-				tmc5_settings.mstep = (int16_t)ptr->words->xyzabc[5];
-			}
+#ifdef STEPPER5_HAS_TMC
+				tmc5_settings.mstep = (uint8_t)ptr->words->xyzabc[5];
 #endif
-#ifdef STEPPER6_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_I))
 			{
-				tmc6_settings.mstep = (int16_t)ptr->words->ijk[0];
-			}
+#ifdef STEPPER6_HAS_TMC
+				tmc6_settings.mstep = (uint8_t)ptr->words->ijk[0];
 #endif
-#ifdef STEPPER7_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_J))
 			{
-				tmc7_settings.mstep = (int16_t)ptr->words->ijk[1];
-			}
+#ifdef STEPPER7_HAS_TMC
+				tmc7_settings.mstep = (uint8_t)ptr->words->ijk[1];
 #endif
+			}
 
 			tmc_driver_update_all(&tmc_set_microstep);
 		}
@@ -551,134 +541,118 @@ bool m906_exec(void *args)
 		itp_sync();
 		if (!ptr->cmd->words)
 		{
-#ifdef STEPPER0_HAS_TMC
-			float val0 = tmc_get_current(&tmc0_driver, &tmc0_settings);
-#endif
-#ifdef STEPPER1_HAS_TMC
-			float val1 = tmc_get_current(&tmc1_driver, &tmc1_settings);
-#endif
-#ifdef STEPPER2_HAS_TMC
-			float val2 = tmc_get_current(&tmc2_driver, &tmc2_settings);
-#endif
-#ifdef STEPPER3_HAS_TMC
-			float val3 = tmc_get_current(&tmc3_driver, &tmc3_settings);
-#endif
-#ifdef STEPPER4_HAS_TMC
-			float val4 = tmc_get_current(&tmc4_driver, &tmc4_settings);
-#endif
-#ifdef STEPPER5_HAS_TMC
-			float val5 = tmc_get_current(&tmc5_driver, &tmc5_settings);
-#endif
-#ifdef STEPPER6_HAS_TMC
-			float val6 = tmc_get_current(&tmc6_driver, &tmc6_settings);
-#endif
-#ifdef STEPPER7_HAS_TMC
-			float val7 = tmc_get_current(&tmc7_driver, &tmc7_settings);
-#endif
-			bool need_comma = false;
-			(void)need_comma; // silence unused warning
+			float val;
 			// if no additional args then print the
 			proto_print("[STEPPER CURRENT:");
-#ifdef STEPPER0_HAS_TMC
+			val = -1;
 			proto_putc('X');
-			proto_ftoa(val0);
-			need_comma = true;
+#ifdef STEPPER0_HAS_TMC
+			val = tmc_get_current(&tmc0_driver, &tmc0_settings);
 #endif
-#ifdef STEPPER1_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_ftoa(val);
+			proto_putc(',');
+			val = -1;
 			proto_putc('Y');
-			proto_ftoa(val1);
-			need_comma = true;
+#ifdef STEPPER1_HAS_TMC
+			val = tmc_get_current(&tmc1_driver, &tmc1_settings);
 #endif
-#ifdef STEPPER2_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_ftoa(val);
+			proto_putc(',');
+			val = -1;
 			proto_putc('Z');
-			proto_ftoa(val2);
-			need_comma = true;
+#ifdef STEPPER2_HAS_TMC
+			val = tmc_get_current(&tmc2_driver, &tmc2_settings);
 #endif
-#ifdef STEPPER3_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_ftoa(val);
+			proto_putc(',');
+			val = -1;
 			proto_putc('A');
-			proto_ftoa(val3);
-			need_comma = true;
+#ifdef STEPPER3_HAS_TMC
+			val = tmc_get_current(&tmc3_driver, &tmc3_settings);
 #endif
-#ifdef STEPPER4_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_ftoa(val);
+			proto_putc(',');
+			val = -1;
 			proto_putc('B');
-			proto_ftoa(val4);
-			need_comma = true;
+#ifdef STEPPER4_HAS_TMC
+			val = tmc_get_current(&tmc4_driver, &tmc4_settings);
 #endif
-#ifdef STEPPER5_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_ftoa(val);
+			proto_putc(',');
+			val = -1;
 			proto_putc('C');
-			proto_ftoa(val5);
-			need_comma = true;
+#ifdef STEPPER5_HAS_TMC
+			val = tmc_get_current(&tmc5_driver, &tmc5_settings);
 #endif
-#ifdef STEPPER6_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_ftoa(val);
+			proto_putc(',');
+			val = -1;
 			proto_putc('I');
-			proto_ftoa(val6);
-			need_comma = true;
+#ifdef STEPPER6_HAS_TMC
+			val = tmc_get_current(&tmc6_driver, &tmc6_settings);
 #endif
-#ifdef STEPPER7_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_ftoa(val);
+			proto_putc(',');
+			val = -1;
 			proto_putc('J');
-			proto_ftoa(val7);
+#ifdef STEPPER7_HAS_TMC
+			val = tmc_get_current(&tmc7_driver, &tmc7_settings);
 #endif
+			proto_ftoa(val);
 			proto_putc(']');
-			proto_putc('\r');
 			proto_putc('\n');
+			proto_putc('\r');
 		}
 		else
 		{
-#ifdef STEPPER0_HAS_TMC
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_X))
 			{
+#ifdef STEPPER0_HAS_TMC
 				tmc0_settings.rms_current = ptr->words->xyzabc[0];
-			}
 #endif
-#ifdef STEPPER1_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_Y))
 			{
+#ifdef STEPPER1_HAS_TMC
 				tmc1_settings.rms_current = ptr->words->xyzabc[1];
-			}
 #endif
-#ifdef STEPPER2_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_Z))
 			{
+#ifdef STEPPER2_HAS_TMC
 				tmc2_settings.rms_current = ptr->words->xyzabc[2];
-			}
 #endif
-#ifdef STEPPER3_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_A))
 			{
+#ifdef STEPPER3_HAS_TMC
 				tmc3_settings.rms_current = ptr->words->xyzabc[3];
-			}
 #endif
-#ifdef STEPPER4_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_B))
 			{
+#ifdef STEPPER4_HAS_TMC
 				tmc4_settings.rms_current = ptr->words->xyzabc[4];
-			}
 #endif
-#ifdef STEPPER5_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_C))
 			{
+#ifdef STEPPER5_HAS_TMC
 				tmc5_settings.rms_current = ptr->words->xyzabc[5];
-			}
 #endif
-#ifdef STEPPER6_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_I))
 			{
+#ifdef STEPPER6_HAS_TMC
 				tmc6_settings.rms_current = ptr->words->ijk[0];
-			}
 #endif
-#ifdef STEPPER7_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_J))
 			{
+#ifdef STEPPER7_HAS_TMC
 				tmc7_settings.rms_current = ptr->words->ijk[1];
-			}
 #endif
+			}
 
 			tmc_driver_update_all(&tmc_set_current);
 		}
@@ -728,135 +702,118 @@ bool m913_exec(void *args)
 		itp_sync();
 		if (!ptr->cmd->words)
 		{
-#ifdef STEPPER0_HAS_TMC
-			int32_t val0 = tmc_get_stealthchop(&tmc0_driver);
-#endif
-#ifdef STEPPER1_HAS_TMC
-			int32_t val1 = tmc_get_stealthchop(&tmc1_driver);
-#endif
-#ifdef STEPPER2_HAS_TMC
-			int32_t val2 = tmc_get_stealthchop(&tmc2_driver);
-#endif
-#ifdef STEPPER3_HAS_TMC
-			int32_t val3 = tmc_get_stealthchop(&tmc3_driver);
-#endif
-#ifdef STEPPER4_HAS_TMC
-			int32_t val4 = tmc_get_stealthchop(&tmc4_driver);
-#endif
-#ifdef STEPPER5_HAS_TMC
-			int32_t val5 = tmc_get_stealthchop(&tmc5_driver);
-#endif
-#ifdef STEPPER6_HAS_TMC
-			int32_t val6 = tmc_get_stealthchop(&tmc6_driver);
-#endif
-#ifdef STEPPER7_HAS_TMC
-			int32_t val7 = tmc_get_stealthchop(&tmc7_driver);
-#endif
-			bool need_comma = false;
-			(void)need_comma; // silence unused warning
+			int32_t val;
 			// if no additional args then print the
 			proto_print("[STEPPER HYBRID THRESHOLD:");
-			
-#ifdef STEPPER0_HAS_TMC
+			val = -1;
 			proto_putc('X');
-			proto_itoa(val0);
-			need_comma = true;
+#ifdef STEPPER0_HAS_TMC
+			val = tmc_get_stealthchop(&tmc0_driver);
 #endif
-#ifdef STEPPER1_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_itoa(val);
+			proto_putc(',');
+			val = -1;
 			proto_putc('Y');
-			proto_itoa(val1);
-			need_comma = true;
+#ifdef STEPPER1_HAS_TMC
+			val = tmc_get_stealthchop(&tmc1_driver);
 #endif
-#ifdef STEPPER2_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_itoa(val);
+			proto_putc(',');
+			val = -1;
 			proto_putc('Z');
-			proto_itoa(val2);
-			need_comma = true;
+#ifdef STEPPER2_HAS_TMC
+			val = tmc_get_stealthchop(&tmc2_driver);
 #endif
-#ifdef STEPPER3_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_itoa(val);
+			proto_putc(',');
+			val = -1;
 			proto_putc('A');
-			proto_itoa(val3);
-			need_comma = true;
+#ifdef STEPPER3_HAS_TMC
+			val = tmc_get_stealthchop(&tmc3_driver);
 #endif
-#ifdef STEPPER4_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_itoa(val);
+			proto_putc(',');
+			val = -1;
 			proto_putc('B');
-			proto_itoa(val4);
-			need_comma = true;
+#ifdef STEPPER4_HAS_TMC
+			val = tmc_get_stealthchop(&tmc4_driver);
 #endif
-#ifdef STEPPER5_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_itoa(val);
+			proto_putc(',');
+			val = -1;
 			proto_putc('C');
-			proto_itoa(val5);
-			need_comma = true;
+#ifdef STEPPER5_HAS_TMC
+			val = tmc_get_stealthchop(&tmc5_driver);
 #endif
-#ifdef STEPPER6_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_itoa(val);
+			proto_putc(',');
+			val = -1;
 			proto_putc('I');
-			proto_itoa(val6);
-			need_comma = true;
+#ifdef STEPPER6_HAS_TMC
+			val = tmc_get_stealthchop(&tmc6_driver);
 #endif
-#ifdef STEPPER7_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_itoa(val);
+			proto_putc(',');
+			val = -1;
 			proto_putc('J');
-			proto_itoa(val7);
+#ifdef STEPPER7_HAS_TMC
+			val = tmc_get_stealthchop(&tmc7_driver);
 #endif
+			proto_itoa(val);
 			proto_putc(']');
-			proto_putc('\r');
 			proto_putc('\n');
+			proto_putc('\r');
 		}
 		else
 		{
-#ifdef STEPPER0_HAS_TMC
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_X))
 			{
+#ifdef STEPPER0_HAS_TMC
 				tmc0_settings.stealthchop_threshold = (uint32_t)ptr->words->xyzabc[0];
-			}
 #endif
-#ifdef STEPPER1_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_Y))
 			{
+#ifdef STEPPER1_HAS_TMC
 				tmc1_settings.stealthchop_threshold = (uint32_t)ptr->words->xyzabc[1];
-			}
 #endif
-#ifdef STEPPER2_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_Z))
 			{
+#ifdef STEPPER2_HAS_TMC
 				tmc2_settings.stealthchop_threshold = (uint32_t)ptr->words->xyzabc[2];
-			}
 #endif
-#ifdef STEPPER3_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_A))
 			{
+#ifdef STEPPER3_HAS_TMC
 				tmc3_settings.stealthchop_threshold = (uint32_t)ptr->words->xyzabc[3];
-			}
 #endif
-#ifdef STEPPER4_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_B))
 			{
+#ifdef STEPPER4_HAS_TMC
 				tmc4_settings.stealthchop_threshold = (uint32_t)ptr->words->xyzabc[4];
-			}
 #endif
-#ifdef STEPPER5_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_C))
 			{
+#ifdef STEPPER5_HAS_TMC
 				tmc5_settings.stealthchop_threshold = (uint32_t)ptr->words->xyzabc[5];
-			}
 #endif
-#ifdef STEPPER6_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_I))
 			{
+#ifdef STEPPER6_HAS_TMC
 				tmc6_settings.stealthchop_threshold = (uint32_t)ptr->words->ijk[0];
-			}
 #endif
-#ifdef STEPPER7_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_J))
 			{
+#ifdef STEPPER7_HAS_TMC
 				tmc7_settings.stealthchop_threshold = (uint32_t)ptr->words->ijk[1];
-			}
 #endif
+			}
 
 			tmc_driver_update_all(&tmc_set_stealthchop);
 		}
@@ -906,134 +863,118 @@ bool m914_exec(void *args)
 		itp_sync();
 		if (!ptr->cmd->words)
 		{
-#ifdef STEPPER0_HAS_TMC
-			int32_t val0 = tmc_get_stallguard(&tmc0_driver);
-#endif
-#ifdef STEPPER1_HAS_TMC
-			int32_t val1 = tmc_get_stallguard(&tmc1_driver);
-#endif
-#ifdef STEPPER2_HAS_TMC
-			int32_t val2 = tmc_get_stallguard(&tmc2_driver);
-#endif
-#ifdef STEPPER3_HAS_TMC
-			int32_t val3 = tmc_get_stallguard(&tmc3_driver);
-#endif
-#ifdef STEPPER4_HAS_TMC
-			int32_t val4 = tmc_get_stallguard(&tmc4_driver);
-#endif
-#ifdef STEPPER5_HAS_TMC
-			int32_t val5 = tmc_get_stallguard(&tmc5_driver);
-#endif
-#ifdef STEPPER6_HAS_TMC
-			int32_t val6 = tmc_get_stallguard(&tmc6_driver);
-#endif
-#ifdef STEPPER7_HAS_TMC
-			int32_t val7 = tmc_get_stallguard(&tmc7_driver);
-#endif
-			bool need_comma = false;
-			(void)need_comma; // silence unused warning
+			int32_t val;
 			// if no additional args then print the
-			protocol_send_string(__romstr__("[STEPPER STALL SENSITIVITY:"));
-#ifdef STEPPER0_HAS_TMC
+			proto_print("[STEPPER STALL SENSITIVITY:");
+			val = -255;
 			proto_putc('X');
-			proto_itoa(val0);
-			need_comma = true;
+#ifdef STEPPER0_HAS_TMC
+			val = tmc_get_stallguard(&tmc0_driver);
 #endif
-#ifdef STEPPER1_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_itoa(val);
+			proto_putc(',');
+			val = -255;
 			proto_putc('Y');
-			proto_itoa(val1);
-			need_comma = true;
+#ifdef STEPPER1_HAS_TMC
+			val = tmc_get_stallguard(&tmc1_driver);
 #endif
-#ifdef STEPPER2_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_itoa(val);
+			proto_putc(',');
+			val = -255;
 			proto_putc('Z');
-			proto_itoa(val2);
-			need_comma = true;
+#ifdef STEPPER2_HAS_TMC
+			val = tmc_get_stallguard(&tmc2_driver);
 #endif
-#ifdef STEPPER3_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_itoa(val);
+			proto_putc(',');
+			val = -255;
 			proto_putc('A');
-			proto_itoa(val3);
-			need_comma = true;
+#ifdef STEPPER3_HAS_TMC
+			val = tmc_get_stallguard(&tmc3_driver);
 #endif
-#ifdef STEPPER4_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_itoa(val);
+			proto_putc(',');
+			val = -255;
 			proto_putc('B');
-			proto_itoa(val4);
-			need_comma = true;
+#ifdef STEPPER4_HAS_TMC
+			val = tmc_get_stallguard(&tmc4_driver);
 #endif
-#ifdef STEPPER5_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_itoa(val);
+			proto_putc(',');
+			val = -255;
 			proto_putc('C');
-			proto_itoa(val5);
-			need_comma = true;
+#ifdef STEPPER5_HAS_TMC
+			val = tmc_get_stallguard(&tmc5_driver);
 #endif
-#ifdef STEPPER6_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_itoa(val);
+			proto_putc(',');
+			val = -255;
 			proto_putc('I');
-			proto_itoa(val6);
-			need_comma = true;
+#ifdef STEPPER6_HAS_TMC
+			val = tmc_get_stallguard(&tmc6_driver);
 #endif
-#ifdef STEPPER7_HAS_TMC
-			if (need_comma) proto_putc(',');
+			proto_itoa(val);
+			proto_putc(',');
+			val = -255;
 			proto_putc('J');
-			proto_itoa(val7);
+#ifdef STEPPER7_HAS_TMC
+			val = tmc_get_stallguard(&tmc7_driver);
 #endif
+			proto_itoa(val);
 			proto_putc(']');
-			proto_putc('\r');
 			proto_putc('\n');
+			proto_putc('\r');
 		}
 		else
 		{
-#ifdef STEPPER0_HAS_TMC
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_X))
 			{
+#ifdef STEPPER0_HAS_TMC
 				tmc0_settings.stallguard_threshold = (int32_t)ptr->words->xyzabc[0];
-			}
 #endif
-#ifdef STEPPER1_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_Y))
 			{
+#ifdef STEPPER1_HAS_TMC
 				tmc1_settings.stallguard_threshold = (int16_t)ptr->words->xyzabc[1];
-			}
 #endif
-#ifdef STEPPER2_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_Z))
 			{
+#ifdef STEPPER2_HAS_TMC
 				tmc2_settings.stallguard_threshold = (int16_t)ptr->words->xyzabc[2];
-			}
 #endif
-#ifdef STEPPER3_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_A))
 			{
+#ifdef STEPPER3_HAS_TMC
 				tmc3_settings.stallguard_threshold = (int16_t)ptr->words->xyzabc[3];
-			}
 #endif
-#ifdef STEPPER4_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_B))
 			{
+#ifdef STEPPER4_HAS_TMC
 				tmc4_settings.stallguard_threshold = (int16_t)ptr->words->xyzabc[4];
-			}
 #endif
-#ifdef STEPPER5_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_C))
 			{
+#ifdef STEPPER5_HAS_TMC
 				tmc5_settings.stallguard_threshold = (int16_t)ptr->words->xyzabc[5];
-			}
 #endif
-#ifdef STEPPER6_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_I))
 			{
+#ifdef STEPPER6_HAS_TMC
 				tmc6_settings.stallguard_threshold = (int16_t)ptr->words->ijk[0];
-			}
 #endif
-#ifdef STEPPER7_HAS_TMC
+			}
 			if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_J))
 			{
+#ifdef STEPPER7_HAS_TMC
 				tmc7_settings.stallguard_threshold = (int16_t)ptr->words->ijk[1];
-			}
 #endif
+			}
 
 			tmc_driver_update_all(&tmc_set_stallguard);
 		}
@@ -1130,8 +1071,8 @@ bool m920_exec(void *args)
 #endif
 			proto_itoa(reg);
 			proto_putc(']');
-			proto_putc('\r');
 			proto_putc('\n');
+			proto_putc('\r');
 		}
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_Y))
@@ -1163,8 +1104,8 @@ bool m920_exec(void *args)
 #endif
 			proto_itoa(reg);
 			proto_putc(']');
-			proto_putc('\r');
 			proto_putc('\n');
+			proto_putc('\r');
 		}
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_Z))
@@ -1196,8 +1137,8 @@ bool m920_exec(void *args)
 #endif
 			proto_itoa(reg);
 			proto_putc(']');
-			proto_putc('\r');
 			proto_putc('\n');
+			proto_putc('\r');
 		}
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_A))
@@ -1229,8 +1170,8 @@ bool m920_exec(void *args)
 #endif
 			proto_itoa(reg);
 			proto_putc(']');
-			proto_putc('\r');
 			proto_putc('\n');
+			proto_putc('\r');
 		}
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_B))
@@ -1262,8 +1203,8 @@ bool m920_exec(void *args)
 #endif
 			proto_itoa(reg);
 			proto_putc(']');
-			proto_putc('\r');
 			proto_putc('\n');
+			proto_putc('\r');
 		}
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_C))
@@ -1295,8 +1236,8 @@ bool m920_exec(void *args)
 #endif
 			proto_itoa(reg);
 			proto_putc(']');
-			proto_putc('\r');
 			proto_putc('\n');
+			proto_putc('\r');
 		}
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_I))
@@ -1328,8 +1269,8 @@ bool m920_exec(void *args)
 #endif
 			proto_itoa(reg);
 			proto_putc(']');
-			proto_putc('\r');
 			proto_putc('\n');
+			proto_putc('\r');
 		}
 
 		if (CHECKFLAG(ptr->cmd->words, GCODE_WORD_J))
@@ -1361,8 +1302,8 @@ bool m920_exec(void *args)
 #endif
 			proto_itoa(reg);
 			proto_putc(']');
-			proto_putc('\r');
 			proto_putc('\n');
+			proto_putc('\r');
 		}
 
 		*(ptr->error) = STATUS_OK;

@@ -55,7 +55,6 @@ uint32_t tmc_read_register(tmc_driver_t *driver, uint8_t address)
 {
 	if (!(driver->rw))
 	{
-		DBGMSG("tmc read failed: !rw %u", address);
 		return TMC_READ_ERROR;
 	}
 
@@ -91,76 +90,67 @@ uint32_t tmc_read_register(tmc_driver_t *driver, uint8_t address)
 		return driver->reg.tpowerdown;
 	}
 
-	int8_t retries = TMC_MAX_WRITE_RETRIES;
-
-	do
+	uint8_t data[8];
+	uint8_t crc = 0;
+	uint32_t result = TMC_READ_ERROR;
+	switch (driver->type)
 	{
-		uint8_t data[8];
-		uint8_t crc = 0;
-		uint32_t result = TMC_READ_ERROR;
-		switch (driver->type)
+	case 2202:
+	case 2208:
+	case 2225:
+		driver->slave = 0;
+	case 2209:
+	case 2226:
+		/* code */
+		data[0] = 0x05;
+		data[1] = driver->slave;
+		data[2] = address & 0x7F;
+		data[3] = tmc_crc8(data, 3);
+		DBGMSG("MCU-R->TMC: %#4hX", data);
+		driver->rw(data, 4, 8);
+		crc = tmc_crc8(data, 7);
+		DBGMSG("TMC-R->MCU: %#7hX,%hX", data, crc);
+		if (data[0] != 0x05)
 		{
-		case 2202:
-		case 2208:
-		case 2225:
-			driver->slave = 0;
-		case 2209:
-		case 2226:
-			/* code */
-			data[0] = 0x05;
-			data[1] = driver->slave;
-			data[2] = address & 0x7F;
-			data[3] = tmc_crc8(data, 3);
-			// DBGMSG("MCU-R->TMC: %#4hX", data);
-			driver->rw(data, 4, 8);
-			crc = tmc_crc8(data, 7);
-			// DBGMSG("TMC-R->MCU: %#7hX,%hX", data, crc);
-			if (data[0] != 0x05)
-			{
-				DBGMSG("TMC start byte error %lx %lx", *(uint32_t*)data, *(uint32_t*)(data + 4));
-				continue;
-			}
-			if (data[1] != 0xFF)
-			{
-				DBGMSG("TMC padding byte  error %lx %lx", *(uint32_t*)data, *(uint32_t*)(data + 4));
-				continue;
-			}
-			if (data[2] != address)
-			{
-				DBGMSG("TMC address error %lx %lx", *(uint32_t*)data, *(uint32_t*)(data + 4));
-				continue;
-			}
-			if (crc != data[7])
-			{
-				DBGMSG("TMC crc response error %lx %lx", *(uint32_t*)data, *(uint32_t*)(data + 4));
-				continue;
-			}
-			result = ((uint32_t)data[3] << 24) | ((uint32_t)data[4] << 16) | ((uint32_t)data[5] << 8) | data[6];
-			break;
-		case 2130:
-			data[0] = address & 0x7F;
-			data[1] = 0;
-			data[2] = 0;
-			data[3] = 0;
-			data[4] = 0;
-			// DBGMSG("MCU-R->TMC: %#5hX", data);
-			driver->rw(data, 5, 5);
-			// DBGMSG("TMC-R->MCU: %#5hX", data);
-			result = ((uint32_t)data[1] << 24) | ((uint32_t)data[2] << 16) | ((uint32_t)data[3] << 8) | data[4];
+			DBGMSG("TMC start byte error");
+			return TMC_READ_ERROR;
 		}
+		if (data[1] != 0xFF)
+		{
+			DBGMSG("TMC padding byte  error");
+			return TMC_READ_ERROR;
+		}
+		if (data[2] != address)
+		{
+			DBGMSG("TMC address error");
+			return TMC_READ_ERROR;
+		}
+		if (crc != data[7])
+		{
+			DBGMSG("TMC crc response error");
+			return TMC_READ_ERROR;
+		}
+		result = ((uint32_t)data[3] << 24) | ((uint32_t)data[4] << 16) | (data[5] << 8) | data[6];
+		break;
+	case 2130:
+		data[0] = address & 0x7F;
+		data[1] = 0;
+		data[2] = 0;
+		data[3] = 0;
+		data[4] = 0;
+		DBGMSG("MCU-R->TMC: %#5hX", data);
+		driver->rw(data, 5, 5);
+		DBGMSG("TMC-R->MCU: %#5hX", data);
+		result = ((uint32_t)data[1] << 24) | ((uint32_t)data[2] << 16) | (data[3] << 8) | data[4];
+	}
 
-		return result;		
-	} while (--retries > 0);
-
-	DBGMSG("tmc read failed: %hx", address);
-	return TMC_READ_ERROR;
+	return result;
 }
 
 uint32_t tmc_write_register(tmc_driver_t *driver, uint8_t address, uint32_t val)
 {
 	if (!(driver->rw))
 	{
-		DBGMSG("tmc write failed: !rw %hx=%lx", address, val);
 		return TMC_WRITE_ERROR;
 	}
 
@@ -224,7 +214,6 @@ uint32_t tmc_write_register(tmc_driver_t *driver, uint8_t address, uint32_t val)
 	case PWMCONF:
 		break;
 	default:
-		DBGMSG("tmc write failed: unsafe %hx=%lx", address, val);
 		return TMC_WRITE_ERROR;
 #endif
 	}
@@ -251,6 +240,7 @@ uint32_t tmc_write_register(tmc_driver_t *driver, uint8_t address, uint32_t val)
 			data[5] = (val >> 8) & 0xFF;
 			data[6] = (val) & 0xFF;
 			data[7] = tmc_crc8(data, 7);
+			DBGMSG("MCU-W->TMC: %#8hX", data);
 			driver->rw(data, 8, 0);
 			break;
 		case 2130:
@@ -269,10 +259,9 @@ uint32_t tmc_write_register(tmc_driver_t *driver, uint8_t address, uint32_t val)
 		}
 
 		// checks if write was executed
-		uint32_t cnt = tmc_read_register(driver, IFCNT);
-		if (cnt != TMC_READ_ERROR && driver->reg.ifcnt != cnt)
+		uint8_t cnt = tmc_read_register(driver, IFCNT);
+		if (driver->reg.ifcnt != cnt)
 		{
-			// DBGMSG("tmc write %hx: ifcnt: %u -> %u", address, driver->reg.ifcnt, cnt);
 			driver->reg.ifcnt = cnt;
 			switch (address)
 			{
@@ -298,10 +287,8 @@ uint32_t tmc_write_register(tmc_driver_t *driver, uint8_t address, uint32_t val)
 
 			return val;
 		}
-		DBGMSG("tmc write retrying: %hx=%lx", address, val);
 	} while (--retries > 0);
 
-	DBGMSG("tmc write failed: %x=%lx", address, val);
 	return TMC_WRITE_ERROR;
 }
 
@@ -392,9 +379,6 @@ float tmc_get_current(tmc_driver_t *driver, tmc_driver_setting_t *settings)
 		return -1;
 	}
 
-	// DBGMSG("get CHOPCONF: %lx", chopconf);
-	// DBGMSG("get IRUN: %d, vsense: %d", TMC_GET_FIELD(driver->reg.ihold_irun, IHOLD_IRUN_IRUN), TMC_GET_FIELD(chopconf, CHOPCONF_VSENSE));
-
 	uint8_t irun = (uint8_t)(TMC_GET_FIELD(driver->reg.ihold_irun, IHOLD_IRUN_IRUN));
 	return (float)(irun + 1) / 32.0 * ((TMC_GET_FIELD(chopconf, CHOPCONF_VSENSE)) ? 0.180 : 0.325) / (settings->rsense + 0.02) / 1.41421 * 1000;
 }
@@ -402,16 +386,15 @@ float tmc_get_current(tmc_driver_t *driver, tmc_driver_setting_t *settings)
 void tmc_set_current(tmc_driver_t *driver, tmc_driver_setting_t *settings)
 {
 	uint8_t currentsense = (uint8_t)roundf(32.0f * 1.41421f * settings->rms_current / 1000.0f * (settings->rsense + 0.02f) / 0.325f) - 1;
+	// If Current Scale is too low, turn on high sensitivity R_sense and calculate again
 	uint32_t chopconf = 0;
 	chopconf = tmc_read_register(driver, CHOPCONF);
 
 	if (chopconf == TMC_READ_ERROR)
 	{
-		DBGMSG("failed CHOPCONF read");
-		return; // TMC_READ_ERROR;
+		return;
 	}
 
-	// If Current Scale is too low, turn on high sensitivity R_sense and calculate again
 	if (currentsense < 16)
 	{
 		// enable vsense
@@ -426,31 +409,14 @@ void tmc_set_current(tmc_driver_t *driver, tmc_driver_setting_t *settings)
 		TMC_SET_FIELD(chopconf, CHOPCONF_VSENSE, 0);
 	}
 
-	if (currentsense > 31)
-	{
-		currentsense = 31;
-	}
-
-	
-	if (tmc_write_register(driver, CHOPCONF, chopconf) == TMC_WRITE_ERROR)
-	{
-		DBGMSG("failed CHOPCONF=%d", chopconf);
-		// return TMC_WRITE_ERROR;
-	}
-	// uint32_t reread_chopconf = tmc_read_register(driver, CHOPCONF);
-	// DBGMSG("set CHOPCONF: %lx (%lx)", chopconf, reread_chopconf);
+	tmc_write_register(driver, CHOPCONF, chopconf);
 
 	// rms current
 	uint32_t ihold_irun = driver->reg.ihold_irun;
 	TMC_SET_FIELD(ihold_irun, IHOLD_IRUN_IRUN, currentsense);
 	TMC_SET_FIELD(ihold_irun, IHOLD_IRUN_IHOLD, (uint8_t)(currentsense * settings->ihold_mul));
-	// DBGMSG("set IRUN: %d, vsense: %d", TMC_GET_FIELD(ihold_irun, IHOLD_IRUN_IRUN), TMC_GET_FIELD(chopconf, CHOPCONF_VSENSE));
-	TMC_SET_FIELD(ihold_irun, IHOLD_IRUN_IHOLDDELAY, (uint8_t)(settings->ihold_delay));
-	if (tmc_write_register(driver, IHOLD_IRUN, ihold_irun) == TMC_WRITE_ERROR)
-	{
-		return; // TMC_WRITE_ERROR;
-	}
-	// return 0;
+	TMC_SET_FIELD(ihold_irun, IHOLD_IRUN_IHOLDDELAY, (uint8_t)(settings->ihold_mul));
+	tmc_write_register(driver, IHOLD_IRUN, ihold_irun);
 }
 
 int32_t tmc_get_microstep(tmc_driver_t *driver)
@@ -504,7 +470,7 @@ void tmc_set_microstep(tmc_driver_t *driver, tmc_driver_setting_t *settings)
 		return;
 	}
 
-	uint8_t ms = TMC_GET_FIELD(chopconf, CHOPCONF_MRES);
+	uint8_t ms;
 	switch (settings->mstep)
 	{
 	case 256:
@@ -535,7 +501,6 @@ void tmc_set_microstep(tmc_driver_t *driver, tmc_driver_setting_t *settings)
 		ms = 8;
 		break;
 	default:
-		DBGMSG("invalid mstep: %d", settings->mstep);
 		if (settings->mstep < 0)
 		{
 			if (driver->type != 2130)
