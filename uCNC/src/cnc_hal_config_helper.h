@@ -53,7 +53,13 @@ extern "C"
 #include "hal/tools/tool.h" //configures the kinematics for the cnc machine
 // final HAL configurations
 #include "../cnc_hal_config.h"		//inicializes the HAL hardcoded connections
+// Hosted/simulator builds may use a minimal overrides file instead of the
+// machine's cnc_hal_overrides.h. Stock builds are unaffected.
+#ifdef SIM_HAL_OVERRIDES_FILE
+#include SIM_HAL_OVERRIDES_FILE //simulator override file
+#else
 #include "../cnc_hal_overrides.h"	//config override file
+#endif
 #include "modules/shift_register.h" // io extender
 
 	/**

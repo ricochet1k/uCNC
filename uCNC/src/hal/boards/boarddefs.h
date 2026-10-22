@@ -29,6 +29,10 @@ extern "C"
 
 #include "../mcus/mcus.h"
 
+// Hosted/simulator builds may skip the machine pin map entirely and configure
+// the MCU/pins via -D flags (the virtual MCU provides its own pin map).
+// Stock firmware builds are unaffected.
+#ifndef SIM_SKIP_BOARDMAP_OVERRIDES
 #ifndef BOARDMAP
 #include "boards_helper.h"
 
@@ -41,6 +45,7 @@ extern "C"
 
 // reinclude the override file
 #include "../../../boardmap_overrides.h"
+#endif
 #include "pin_mapping_helper.h"
 #include "../mcus/mcudefs.h" //configures the MCU for the selected board
 

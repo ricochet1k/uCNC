@@ -39,6 +39,9 @@ extern "C"
 #include <sys/time.h>
 #include <signal.h>
 #include <sys/select.h>
+#ifdef SIM_PTY
+#include <pty.h>
+#endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <limits.h>
@@ -238,6 +241,154 @@ extern "C"
         g_uart.port_name[sizeof(g_uart.port_name) - 1] = '\0';
         pthread_create(&g_uart.thread, NULL, &uart_thread_fn, NULL);
     }
+
+#ifdef SIM_PTY
+    /* Hosted tests: UART2 (the Grbl protocol stream on the virtual MCU) is
+       bridged to a PTY. The emulator side uses the master fd; the slave path
+       is printed and symlinked so a client (SimpleCNC server) can open it. */
+    static int sim_pty_master = -1;
+
+    extern void virtual_io_set_input(uint8_t pin, int value);
+    extern void cnc_call_rt_command(uint8_t command);
+
+    static void *sim_control_thread(void *arg)
+    {
+        (void)arg;
+        char line[256];
+        while (fgets(line, sizeof(line), stdin))
+        {
+            char axis = 0;
+            int value = 0;
+            if (sscanf(line, "probe %d", &value) == 1)
+            {
+                virtual_io_set_input(PROBE, value != 0);
+                fprintf(stderr, "[sim] probe=%d\n", value);
+            }
+            else if (sscanf(line, "limit %c %d", &axis, &value) == 2)
+            {
+                switch (axis)
+                {
+#ifdef LIMIT_X
+                case 'X': virtual_io_set_input(LIMIT_X, value != 0); break;
+#endif
+#ifdef LIMIT_Y
+                case 'Y': virtual_io_set_input(LIMIT_Y, value != 0); break;
+#endif
+#ifdef LIMIT_Z
+                case 'Z': virtual_io_set_input(LIMIT_Z, value != 0); break;
+#endif
+#ifdef LIMIT_A
+                case 'A': virtual_io_set_input(LIMIT_A, value != 0); break;
+#endif
+#ifdef LIMIT_B
+                case 'B': virtual_io_set_input(LIMIT_B, value != 0); break;
+#endif
+                default: fprintf(stderr, "[sim] unknown limit axis %c\n", axis); continue;
+                }
+                fprintf(stderr, "[sim] limit %c=%d\n", axis, value);
+            }
+            else if (sscanf(line, "estop %d", &value) == 1)
+            {
+                virtual_io_set_input(ESTOP, value != 0);
+                fprintf(stderr, "[sim] estop=%d\n", value);
+            }
+            else if (sscanf(line, "fhold %d", &value) == 1)
+            {
+                virtual_io_set_input(FHOLD, value != 0);
+                fprintf(stderr, "[sim] fhold=%d\n", value);
+            }
+#ifdef SAFETY_DOOR
+            else if (sscanf(line, "door %d", &value) == 1)
+            {
+                virtual_io_set_input(SAFETY_DOOR, value != 0);
+                fprintf(stderr, "[sim] door=%d\n", value);
+            }
+#endif
+            else if (!strncmp(line, "reset", 5))
+            {
+                cnc_call_rt_command(CMD_CODE_RESET);
+                fprintf(stderr, "[sim] reset\n");
+            }
+            else if (!strncmp(line, "quit", 4) || !strncmp(line, "exit", 4))
+            {
+                exit(0);
+            }
+            else if (!strncmp(line, "status", 6))
+            {
+                fprintf(stderr, "[sim] status: probe=%d estop=%d fhold=%d\n",
+                        mcu_get_input(PROBE), mcu_get_input(ESTOP), mcu_get_input(FHOLD));
+            }
+            else if (line[0] != '\n' && line[0] != '\0')
+            {
+                fprintf(stderr, "[sim] commands: probe 0|1, limit X|Y|Z|A|B 0|1, estop 0|1, fhold 0|1, door 0|1, reset, status, quit\n");
+            }
+        }
+        return NULL;
+    }
+
+    void sim_pty_init(void)
+    {
+        int slave = -1;
+        if (!isatty(STDIN_FILENO) || 1) { /* always create our own pair */ }
+        if (openpty(&sim_pty_master, &slave, NULL, NULL, NULL) != 0)
+        {
+            perror("openpty");
+            return;
+        }
+
+        char slave_buf[256];
+        /* ptsname_r can fail with ENOTTY here; ttyname_r works on the slave. */
+        const char *slave_name = (ttyname_r(slave, slave_buf, sizeof(slave_buf)) == 0) ? slave_buf : NULL;
+        if (slave_name)
+        {
+            const char *link = getenv("SIM_PTY_LINK");
+            if (!link) link = "/tmp/ucnc-sim-tty";
+            unlink(link);
+            if (symlink(slave_name, link) != 0)
+            {
+                /* not fatal: the printed path is usable */
+            }
+            printf("SIM PTY: %s (link %s)\n", slave_name, link);
+            fflush(stdout);
+        }
+        {
+            pthread_t t;
+            pthread_create(&t, NULL, &sim_control_thread, NULL);
+            pthread_detach(t);
+        }
+        close(slave);
+        fcntl(sim_pty_master, F_SETFL, fcntl(sim_pty_master, F_GETFL, 0) | O_NONBLOCK);
+    }
+
+    int sim_uart2_read(uint8_t *buf, unsigned max)
+    {
+        if (sim_pty_master < 0)
+            return 0;
+        ssize_t r = read(sim_pty_master, buf, max);
+        if (r > 0)
+            return (int)r;
+        return 0;
+    }
+
+    void sim_uart2_write(const uint8_t *buf, unsigned len)
+    {
+        if (sim_pty_master < 0)
+            return;
+        unsigned off = 0;
+        while (off < len)
+        {
+            ssize_t w = write(sim_pty_master, buf + off, len - off);
+            if (w > 0)
+            {
+                off += (unsigned)w;
+                continue;
+            }
+            if (w < 0 && (errno == EINTR))
+                continue;
+            break; /* EAGAIN or no slave open: drop like a real UART */
+        }
+    }
+#endif
 
     /* ---------------- Console helpers (kbhit/getch) ------------------------ */
 

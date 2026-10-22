@@ -36,6 +36,12 @@ extern "C"
 #include <pthread.h>
 #include <sys/time.h>
 
+#ifdef SIM_PTY
+	extern void sim_pty_init(void);
+	extern int sim_uart2_read(uint8_t *buf, unsigned max);
+	extern void sim_uart2_write(const uint8_t *buf, unsigned len);
+#endif
+
 	/* ----- Global ISR enable/disable --------------------------------------- */
 
 	volatile bool global_isr_enabled = false;
@@ -154,8 +160,12 @@ extern "C"
 			memset(tmp, 0, sizeof(tmp));
 			uint8_t r = 0;
 			BUFFER_READ(uart2_tx, tmp, UART2_TX_BUFFER_SIZE, r);
+#ifdef SIM_PTY
+			sim_uart2_write(tmp, r);
+#else
 			printf("%s", tmp);
 			fflush(stdout);
+#endif
 		}
 	}
 
@@ -164,6 +174,21 @@ extern "C"
 	extern int console_getch(void);
 	static void mcu_uart2_process(void)
 	{
+#ifdef SIM_PTY
+		uint8_t buf[RX_BUFFER_SIZE];
+		int n = sim_uart2_read(buf, sizeof(buf));
+		for (int i = 0; i < n; i++)
+		{
+			uint8_t c = buf[i];
+			if (mcu_com_rx_cb(c))
+			{
+				if (!BUFFER_TRY_ENQUEUE(uart2_rx, &c))
+				{
+					STREAM_OVF(c);
+				}
+			}
+		}
+#else
 		if (console_kbhit())
 		{
 			int kc = console_getch();
@@ -179,6 +204,7 @@ extern "C"
 				}
 			}
 		}
+#endif
 	}
 
 #endif /* MCU_HAS_UART2 */
@@ -1305,6 +1331,22 @@ void mcu_usb_init() {}
 		snprintf(buf + n, cap - n, "]}");
 	}
 
+	void virtual_io_set_input(uint8_t pin, int value)
+	{
+		if (pin >= IO_PIN_COUNT)
+			return;
+		io_pins[pin].type = IO_PIN_INPUT;
+		io_pins[pin].value = value ? 1 : 0;
+		if (pin == PROBE)
+			mcu_probe_changed_cb();
+		else if (pin >= LIMIT_X && pin <= LIMIT_C)
+			mcu_limits_changed_cb();
+		else if (pin >= ESTOP && pin <= CS_RES)
+			mcu_controls_changed_cb();
+		else
+			mcu_inputs_changed_cb();
+	}
+
 	static void http_handle_input(int fd, const char *body)
 	{
 		int pin = -1;
@@ -1317,16 +1359,7 @@ void mcu_usb_init() {}
 		io_pin_group_t grp = io_pin_info[pin].group;
 		if (grp == IO_GROUP_CONTROL || grp == IO_GROUP_INPUT)
 		{
-			io_pins[pin].type = IO_PIN_INPUT;
-			io_pins[pin].value = value ? 1 : 0;
-			if (pin == PROBE)
-				mcu_probe_changed_cb();
-			else if (pin >= LIMIT_X && pin <= LIMIT_C)
-				mcu_limits_changed_cb();
-			else if (pin >= ESTOP && pin <= CS_RES)
-				mcu_controls_changed_cb();
-			else
-				mcu_inputs_changed_cb();
+			virtual_io_set_input((uint8_t)pin, value);
 			http_respond(fd, "200 OK", "application/json", "{\"ok\":true}");
 		}
 		else if (grp == IO_GROUP_ANALOG)
@@ -1445,6 +1478,9 @@ void mcu_usb_init() {}
 	void mcu_init(void)
 	{
 		virtual_io_pins_init();
+#ifdef SIM_PTY
+		sim_pty_init();
+#endif
 
 #ifndef PIO_UNIT_TESTING
 		char cwd[1024];
