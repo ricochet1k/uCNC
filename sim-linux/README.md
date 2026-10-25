@@ -1,5 +1,8 @@
 # sim-linux — my_cnc config on upstream's EMULATOR_LINUX
 
+See `UPSTREAM-MERGE.md` for the merge decisions, conflict resolutions, PTY
+architecture, validation results and known gaps.
+
 This builds the machine's config (5-axis cartesian, S-curve runtime `$14`) on
 upstream's `EMULATOR_LINUX` virtual MCU, with the Grbl protocol on a PTY
 instead of stdin/stdout. It keeps the production serial path: the SimpleCNC
